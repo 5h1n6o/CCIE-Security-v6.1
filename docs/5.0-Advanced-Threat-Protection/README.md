@@ -1,5 +1,6 @@
 ---
 layout: default
+parent: CCIE Security v6.1
 title: 5.0-Advanced-Threat-Protection
 nav_order: 5
 ---
