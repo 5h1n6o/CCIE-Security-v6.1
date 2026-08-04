@@ -1,5 +1,6 @@
 ---
 layout: default
+parent: CCIE Security v6.1
 title: 2.0-Secure-Connectivity-and-Segmentation
 nav_order: 2
 ---
