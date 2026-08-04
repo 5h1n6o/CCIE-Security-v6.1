@@ -1,18 +1,12 @@
 title: CCIE Security v6.1 Study Notes
 description: CCIE Security v6.1 Blueprint に基づく学習サイト
-theme: just-the-docs
 
-url: "https://5h1n6o.github.io/CCIE-Security-v6.1"
 
-# GitHub Pages 用
+remote_theme: just-the-docs/just-the-docs
+
 plugins:
-  - jekyll-relative-links
+  - jekyll-remote-theme
 
-relative_links:
-  enabled: true
-  collections: true
-
-# docs/ をサイトのルートにする
-include:
-  - docs
-
+search_enabled: true
+heading_anchors: true
+nav_enabled: true
