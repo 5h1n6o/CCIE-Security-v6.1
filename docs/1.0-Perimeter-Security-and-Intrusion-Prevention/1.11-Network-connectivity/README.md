@@ -1,3 +1,9 @@
+---
+layout: default
+title: 1.11-Network-connectivity
+nav_order: 1
+---
+
 # 1.11-Network-connectivity
 
 📘 **概要**  

@@ -1,3 +1,9 @@
+---
+layout: default
+title: 1.7.d-MITM
+nav_order: 1
+---
+
 # 1.7.d-MITM
 
 📘 **概要**  

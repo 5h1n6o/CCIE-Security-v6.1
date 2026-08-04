@@ -1,3 +1,9 @@
+---
+layout: default
+title: 4.5-Guest-lifecycle
+nav_order: 4
+---
+
 # 4.5-Guest-lifecycle
 
 📘 **概要**  

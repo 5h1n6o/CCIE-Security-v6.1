@@ -1,3 +1,9 @@
+---
+layout: default
+title: 5.7.c-Quarantine
+nav_order: 5
+---
+
 # 5.7.c-Quarantine
 
 📘 **概要**  

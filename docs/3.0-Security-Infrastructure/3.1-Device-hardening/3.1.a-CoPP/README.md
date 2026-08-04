@@ -1,3 +1,9 @@
+---
+layout: default
+title: 3.1.a-CoPP
+nav_order: 3
+---
+
 # 3.1.a-CoPP
 
 📘 **概要**  

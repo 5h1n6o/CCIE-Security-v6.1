@@ -1,3 +1,9 @@
+---
+layout: default
+title: 4.7-External-identity
+nav_order: 4
+---
+
 # 4.7-External-identity
 
 📘 **概要**  

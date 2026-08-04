@@ -1,3 +1,9 @@
+---
+layout: default
+title: 4.1-ISE-scalability
+nav_order: 4
+---
+
 # 4.1-ISE-scalability
 
 📘 **概要**  

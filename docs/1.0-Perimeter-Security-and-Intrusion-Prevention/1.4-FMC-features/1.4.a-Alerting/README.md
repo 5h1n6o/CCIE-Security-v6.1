@@ -1,3 +1,9 @@
+---
+layout: default
+title: 1.4.a-Alerting
+nav_order: 1
+---
+
 # 1.4.a-Alerting
 
 📘 **概要**  

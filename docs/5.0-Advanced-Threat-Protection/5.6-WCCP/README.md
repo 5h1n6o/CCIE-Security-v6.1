@@ -1,3 +1,9 @@
+---
+layout: default
+title: 5.6-WCCP
+nav_order: 5
+---
+
 # 5.6-WCCP
 
 📘 **概要**  

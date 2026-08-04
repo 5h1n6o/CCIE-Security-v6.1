@@ -1,3 +1,9 @@
+---
+layout: default
+title: 1.5.a-Inline
+nav_order: 1
+---
+
 # 1.5.a-Inline
 
 📘 **概要**  

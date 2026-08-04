@@ -1,3 +1,9 @@
+---
+layout: default
+title: 4.7.b-AD
+nav_order: 4
+---
+
 # 4.7.b-AD
 
 📘 **概要**  

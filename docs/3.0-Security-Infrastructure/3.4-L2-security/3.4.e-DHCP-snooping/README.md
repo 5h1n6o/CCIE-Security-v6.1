@@ -1,3 +1,9 @@
+---
+layout: default
+title: 3.4.e-DHCP-snooping
+nav_order: 3
+---
+
 # 3.4.e-DHCP-snooping
 
 📘 **概要**  

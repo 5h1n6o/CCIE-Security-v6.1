@@ -1,3 +1,9 @@
+---
+layout: default
+title: 3.6.b-SNMP
+nav_order: 3
+---
+
 # 3.6.b-SNMP
 
 📘 **概要**  

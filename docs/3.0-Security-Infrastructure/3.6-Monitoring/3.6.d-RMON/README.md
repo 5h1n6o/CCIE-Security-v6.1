@@ -1,3 +1,9 @@
+---
+layout: default
+title: 3.6.d-RMON
+nav_order: 3
+---
+
 # 3.6.d-RMON
 
 📘 **概要**  

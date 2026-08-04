@@ -1,3 +1,9 @@
+---
+layout: default
+title: 4.18-IBNS2.0
+nav_order: 4
+---
+
 # 4.18-IBNS2.0
 
 📘 **概要**  

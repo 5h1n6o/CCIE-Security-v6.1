@@ -1,3 +1,9 @@
+---
+layout: default
+title: 1.0-Perimeter-Security-and-Intrusion-Prevention
+nav_order: 1
+---
+
 # 1.0-Perimeter-Security-and-Intrusion-Prevention
 
 📘 **概要**  

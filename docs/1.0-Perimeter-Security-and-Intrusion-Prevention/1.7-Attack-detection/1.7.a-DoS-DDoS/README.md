@@ -1,3 +1,9 @@
+---
+layout: default
+title: 1.7.a-DoS-DDoS
+nav_order: 1
+---
+
 # 1.7.a-DoS-DDoS
 
 📘 **概要**  

@@ -1,3 +1,9 @@
+---
+layout: default
+title: 2.5-Infrastructure-segmentation
+nav_order: 2
+---
+
 # 2.5-Infrastructure-segmentation
 
 📘 **概要**  

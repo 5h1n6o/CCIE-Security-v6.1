@@ -1,3 +1,9 @@
+---
+layout: default
+title: 3.5-Wireless-security
+nav_order: 3
+---
+
 # 3.5-Wireless-security
 
 📘 **概要**  

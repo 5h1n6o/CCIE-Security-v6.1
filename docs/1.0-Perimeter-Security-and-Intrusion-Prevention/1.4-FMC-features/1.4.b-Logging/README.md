@@ -1,3 +1,9 @@
+---
+layout: default
+title: 1.4.b-Logging
+nav_order: 1
+---
+
 # 1.4.b-Logging
 
 📘 **概要**  

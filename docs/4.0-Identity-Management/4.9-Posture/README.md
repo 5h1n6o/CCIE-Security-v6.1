@@ -1,3 +1,9 @@
+---
+layout: default
+title: 4.9-Posture
+nav_order: 4
+---
+
 # 4.9-Posture
 
 📘 **概要**  

@@ -1,3 +1,9 @@
+---
+layout: default
+title: 1.7.e-Botnet
+nav_order: 1
+---
+
 # 1.7.e-Botnet
 
 📘 **概要**  

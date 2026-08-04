@@ -1,3 +1,9 @@
+---
+layout: default
+title: 1.1.b-Transparent
+nav_order: 1
+---
+
 # 1.1.b-Transparent
 
 📘 **概要**  

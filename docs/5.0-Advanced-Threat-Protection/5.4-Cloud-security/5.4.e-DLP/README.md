@@ -1,3 +1,9 @@
+---
+layout: default
+title: 5.4.e-DLP
+nav_order: 5
+---
+
 # 5.4.e-DLP
 
 📘 **概要**  

@@ -1,3 +1,9 @@
+---
+layout: default
+title: 1.9-Policies-and-rules
+nav_order: 1
+---
+
 # 1.9-Policies-and-rules
 
 📘 **概要**  

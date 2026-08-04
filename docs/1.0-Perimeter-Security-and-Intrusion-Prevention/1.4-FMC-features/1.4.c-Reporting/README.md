@@ -1,3 +1,9 @@
+---
+layout: default
+title: 1.4.c-Reporting
+nav_order: 1
+---
+
 # 1.4.c-Reporting
 
 📘 **概要**  

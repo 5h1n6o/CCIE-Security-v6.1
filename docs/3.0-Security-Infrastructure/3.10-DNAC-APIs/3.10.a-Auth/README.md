@@ -1,3 +1,9 @@
+---
+layout: default
+title: 3.10.a-Auth
+nav_order: 3
+---
+
 # 3.10.a-Auth
 
 📘 **概要**  

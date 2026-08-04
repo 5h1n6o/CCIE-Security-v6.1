@@ -1,3 +1,9 @@
+---
+layout: default
+title: 3.2.c-Securing-device-access
+nav_order: 3
+---
+
 # 3.2.c-Securing-device-access
 
 📘 **概要**  

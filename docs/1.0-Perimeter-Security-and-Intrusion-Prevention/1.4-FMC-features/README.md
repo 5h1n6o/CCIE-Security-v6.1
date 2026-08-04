@@ -1,3 +1,9 @@
+---
+layout: default
+title: 1.4-FMC-features
+nav_order: 1
+---
+
 # 1.4-FMC-features
 
 📘 **概要**  

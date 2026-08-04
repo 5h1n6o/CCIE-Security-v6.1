@@ -1,3 +1,9 @@
+---
+layout: default
+title: 2.5.c-GRE
+nav_order: 2
+---
+
 # 2.5.c-GRE
 
 📘 **概要**  

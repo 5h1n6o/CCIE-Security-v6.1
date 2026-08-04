@@ -1,3 +1,9 @@
+---
+layout: default
+title: 1.5.b-Passive
+nav_order: 1
+---
+
 # 1.5.b-Passive
 
 📘 **概要**  

@@ -1,3 +1,9 @@
+---
+layout: default
+title: CCIE Security v6.1
+nav_order: 1
+---
+
 # CCIE Security v6.1 学習メモ
 
 このリポジトリは **Cisco CCIE Security v6.1 Blueprint** に基づき、  

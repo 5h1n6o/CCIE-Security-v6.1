@@ -1,3 +1,9 @@
+---
+layout: default
+title: 2.5.b-PVLAN
+nav_order: 2
+---
+
 # 2.5.b-PVLAN
 
 📘 **概要**  

@@ -1,3 +1,9 @@
+---
+layout: default
+title: 3.7.c-PCI-DSS
+nav_order: 3
+---
+
 # 3.7.c-PCI-DSS
 
 📘 **概要**  

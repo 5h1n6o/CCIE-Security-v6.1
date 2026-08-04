@@ -1,3 +1,9 @@
+---
+layout: default
+title: 5.7.a-Mail-policies
+nav_order: 5
+---
+
 # 5.7.a-Mail-policies
 
 📘 **概要**  

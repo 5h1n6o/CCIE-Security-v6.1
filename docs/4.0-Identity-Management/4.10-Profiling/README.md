@@ -1,3 +1,9 @@
+---
+layout: default
+title: 4.10-Profiling
+nav_order: 4
+---
+
 # 4.10-Profiling
 
 📘 **概要**  

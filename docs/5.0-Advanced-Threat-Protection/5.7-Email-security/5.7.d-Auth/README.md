@@ -1,3 +1,9 @@
+---
+layout: default
+title: 5.7.d-Auth
+nav_order: 5
+---
+
 # 5.7.d-Auth
 
 📘 **概要**  

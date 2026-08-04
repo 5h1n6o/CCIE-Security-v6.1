@@ -1,3 +1,9 @@
+---
+layout: default
+title: 3.5.b-WPA2
+nav_order: 3
+---
+
 # 3.5.b-WPA2
 
 📘 **概要**  

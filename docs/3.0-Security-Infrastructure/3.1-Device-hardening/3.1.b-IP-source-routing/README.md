@@ -1,3 +1,9 @@
+---
+layout: default
+title: 3.1.b-IP-source-routing
+nav_order: 3
+---
+
 # 3.1.b-IP-source-routing
 
 📘 **概要**  

@@ -1,3 +1,9 @@
+---
+layout: default
+title: 4.7.a-LDAP
+nav_order: 4
+---
+
 # 4.7.a-LDAP
 
 📘 **概要**  

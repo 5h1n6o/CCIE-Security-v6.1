@@ -1,3 +1,9 @@
+---
+layout: default
+title: 2.4-VPN-HA
+nav_order: 2
+---
+
 # 2.4-VPN-HA
 
 📘 **概要**  

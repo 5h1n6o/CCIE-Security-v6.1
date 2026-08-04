@@ -1,3 +1,9 @@
+---
+layout: default
+title: 3.9.b-Data-encoding
+nav_order: 3
+---
+
 # 3.9.b-Data-encoding
 
 📘 **概要**  

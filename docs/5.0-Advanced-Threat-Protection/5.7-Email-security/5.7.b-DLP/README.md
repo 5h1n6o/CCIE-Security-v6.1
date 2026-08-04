@@ -1,3 +1,9 @@
+---
+layout: default
+title: 5.7.b-DLP
+nav_order: 5
+---
+
 # 5.7.b-DLP
 
 📘 **概要**  

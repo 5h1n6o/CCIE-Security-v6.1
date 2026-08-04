@@ -1,3 +1,9 @@
+---
+layout: default
+title: 2.6-TrustSec-SGT-SXP
+nav_order: 2
+---
+
 # 2.6-TrustSec-SGT-SXP
 
 📘 **概要**  

@@ -1,3 +1,9 @@
+---
+layout: default
+title: 2.5.d-VRF-Lite
+nav_order: 2
+---
+
 # 2.5.d-VRF-Lite
 
 📘 **概要**  

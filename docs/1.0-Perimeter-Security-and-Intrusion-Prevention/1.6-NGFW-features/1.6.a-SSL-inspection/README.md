@@ -1,3 +1,9 @@
+---
+layout: default
+title: 1.6.a-SSL-inspection
+nav_order: 1
+---
+
 # 1.6.a-SSL-inspection
 
 📘 **概要**  

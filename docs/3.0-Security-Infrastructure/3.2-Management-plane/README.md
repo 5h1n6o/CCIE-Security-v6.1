@@ -1,3 +1,9 @@
+---
+layout: default
+title: 3.2-Management-plane
+nav_order: 3
+---
+
 # 3.2-Management-plane
 
 📘 **概要**  

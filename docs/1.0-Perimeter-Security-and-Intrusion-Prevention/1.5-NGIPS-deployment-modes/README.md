@@ -1,3 +1,9 @@
+---
+layout: default
+title: 1.5-NGIPS-deployment-modes
+nav_order: 1
+---
+
 # 1.5-NGIPS-deployment-modes
 
 📘 **概要**  

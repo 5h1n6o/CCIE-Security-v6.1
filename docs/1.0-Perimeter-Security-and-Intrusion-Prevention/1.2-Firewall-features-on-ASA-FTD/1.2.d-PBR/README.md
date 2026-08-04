@@ -1,3 +1,9 @@
+---
+layout: default
+title: 1.2.d-PBR
+nav_order: 1
+---
+
 # 1.2.d-PBR
 
 📘 **概要**  

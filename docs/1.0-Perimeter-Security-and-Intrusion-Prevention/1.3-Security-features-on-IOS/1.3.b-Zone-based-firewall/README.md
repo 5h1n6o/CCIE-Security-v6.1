@@ -1,3 +1,9 @@
+---
+layout: default
+title: 1.3.b-Zone-based-firewall
+nav_order: 1
+---
+
 # 1.3.b-Zone-based-firewall
 
 📘 **概要**  

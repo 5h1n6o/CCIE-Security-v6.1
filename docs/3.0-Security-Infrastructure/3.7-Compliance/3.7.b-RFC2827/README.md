@@ -1,3 +1,9 @@
+---
+layout: default
+title: 3.7.b-RFC2827
+nav_order: 3
+---
+
 # 3.7.b-RFC2827
 
 📘 **概要**  

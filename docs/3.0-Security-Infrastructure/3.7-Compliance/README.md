@@ -1,3 +1,9 @@
+---
+layout: default
+title: 3.7-Compliance
+nav_order: 3
+---
+
 # 3.7-Compliance
 
 📘 **概要**  

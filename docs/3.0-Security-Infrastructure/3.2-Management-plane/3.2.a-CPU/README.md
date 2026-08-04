@@ -1,3 +1,9 @@
+---
+layout: default
+title: 3.2.a-CPU
+nav_order: 3
+---
+
 # 3.2.a-CPU
 
 📘 **概要**  

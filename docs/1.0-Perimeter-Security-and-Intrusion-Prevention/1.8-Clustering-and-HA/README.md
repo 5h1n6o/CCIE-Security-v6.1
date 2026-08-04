@@ -1,3 +1,9 @@
+---
+layout: default
+title: 1.8-Clustering-and-HA
+nav_order: 1
+---
+
 # 1.8-Clustering-and-HA
 
 📘 **概要**  

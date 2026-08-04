@@ -1,3 +1,9 @@
+---
+layout: default
+title: 1.2.f-Identity-firewall
+nav_order: 1
+---
+
 # 1.2.f-Identity-firewall
 
 📘 **概要**  

@@ -1,3 +1,9 @@
+---
+layout: default
+title: 4.0-Identity-Management
+nav_order: 4
+---
+
 # 4.0-Identity-Management
 
 📘 **概要**  

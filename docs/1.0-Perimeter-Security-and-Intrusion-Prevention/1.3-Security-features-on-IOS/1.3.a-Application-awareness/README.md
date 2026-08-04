@@ -1,3 +1,9 @@
+---
+layout: default
+title: 1.3.a-Application-awareness
+nav_order: 1
+---
+
 # 1.3.a-Application-awareness
 
 📘 **概要**  

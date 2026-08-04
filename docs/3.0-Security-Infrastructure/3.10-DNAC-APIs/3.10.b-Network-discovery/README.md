@@ -1,3 +1,9 @@
+---
+layout: default
+title: 3.10.b-Network-discovery
+nav_order: 3
+---
+
 # 3.10.b-Network-discovery
 
 📘 **概要**  

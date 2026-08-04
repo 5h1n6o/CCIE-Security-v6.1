@@ -1,3 +1,9 @@
+---
+layout: default
+title: 2.4.b-Dual-hub-DMVPN
+nav_order: 2
+---
+
 # 2.4.b-Dual-hub-DMVPN
 
 📘 **概要**  

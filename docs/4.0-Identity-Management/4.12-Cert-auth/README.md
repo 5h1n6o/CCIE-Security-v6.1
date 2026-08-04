@@ -1,3 +1,9 @@
+---
+layout: default
+title: 4.12-Cert-auth
+nav_order: 4
+---
+
 # 4.12-Cert-auth
 
 📘 **概要**  

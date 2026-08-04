@@ -1,3 +1,9 @@
+---
+layout: default
+title: 1.12-Correlation-and-remediation
+nav_order: 1
+---
+
 # 1.12-Correlation-and-remediation
 
 📘 **概要**  

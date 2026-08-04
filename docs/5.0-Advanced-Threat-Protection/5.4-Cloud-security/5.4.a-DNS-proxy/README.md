@@ -1,3 +1,9 @@
+---
+layout: default
+title: 5.4.a-DNS-proxy
+nav_order: 5
+---
+
 # 5.4.a-DNS-proxy
 
 📘 **概要**  

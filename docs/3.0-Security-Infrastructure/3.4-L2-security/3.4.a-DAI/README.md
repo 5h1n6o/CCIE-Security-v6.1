@@ -1,3 +1,9 @@
+---
+layout: default
+title: 3.4.a-DAI
+nav_order: 3
+---
+
 # 3.4.a-DAI
 
 📘 **概要**  

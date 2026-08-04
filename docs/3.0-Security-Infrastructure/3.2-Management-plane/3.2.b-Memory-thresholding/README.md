@@ -1,3 +1,9 @@
+---
+layout: default
+title: 3.2.b-Memory-thresholding
+nav_order: 3
+---
+
 # 3.2.b-Memory-thresholding
 
 📘 **概要**  

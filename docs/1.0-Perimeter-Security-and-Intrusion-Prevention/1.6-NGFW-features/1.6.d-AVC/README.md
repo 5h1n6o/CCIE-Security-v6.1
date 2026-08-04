@@ -1,3 +1,9 @@
+---
+layout: default
+title: 1.6.d-AVC
+nav_order: 1
+---
+
 # 1.6.d-AVC
 
 📘 **概要**  

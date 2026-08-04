@@ -1,3 +1,9 @@
+---
+layout: default
+title: 1.2.a-NAT
+nav_order: 1
+---
+
 # 1.2.a-NAT
 
 📘 **概要**  

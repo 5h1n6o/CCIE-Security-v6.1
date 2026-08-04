@@ -1,3 +1,9 @@
+---
+layout: default
+title: 3.10.d-Network-host
+nav_order: 3
+---
+
 # 3.10.d-Network-host
 
 📘 **概要**  

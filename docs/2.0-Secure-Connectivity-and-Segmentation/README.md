@@ -1,3 +1,9 @@
+---
+layout: default
+title: 2.0-Secure-Connectivity-and-Segmentation
+nav_order: 2
+---
+
 # 2.0-Secure-Connectivity-and-Segmentation
 
 📘 **概要**  

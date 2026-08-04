@@ -1,3 +1,9 @@
+---
+layout: default
+title: 1.2.b-Application-inspection
+nav_order: 1
+---
+
 # 1.2.b-Application-inspection
 
 📘 **概要**  

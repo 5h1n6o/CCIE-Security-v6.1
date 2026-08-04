@@ -1,3 +1,9 @@
+---
+layout: default
+title: 3.6.e-eStreamer
+nav_order: 3
+---
+
 # 3.6.e-eStreamer
 
 📘 **概要**  

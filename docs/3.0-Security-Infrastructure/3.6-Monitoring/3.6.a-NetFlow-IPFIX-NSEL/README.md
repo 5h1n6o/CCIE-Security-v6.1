@@ -1,3 +1,9 @@
+---
+layout: default
+title: 3.6.a-NetFlow-IPFIX-NSEL
+nav_order: 3
+---
+
 # 3.6.a-NetFlow-IPFIX-NSEL
 
 📘 **概要**  

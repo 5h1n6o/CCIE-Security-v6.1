@@ -1,3 +1,9 @@
+---
+layout: default
+title: 4.14-Identity-mapping
+nav_order: 4
+---
+
 # 4.14-Identity-mapping
 
 📘 **概要**  

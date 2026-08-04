@@ -1,3 +1,9 @@
+---
+layout: default
+title: 5.1-AMP
+nav_order: 5
+---
+
 # 5.1-AMP
 
 📘 **概要**  

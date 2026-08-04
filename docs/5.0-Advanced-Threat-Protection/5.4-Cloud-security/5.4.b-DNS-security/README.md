@@ -1,3 +1,9 @@
+---
+layout: default
+title: 5.4.b-DNS-security
+nav_order: 5
+---
+
 # 5.4.b-DNS-security
 
 📘 **概要**  

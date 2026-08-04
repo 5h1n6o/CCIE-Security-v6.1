@@ -1,3 +1,9 @@
+---
+layout: default
+title: 2.5.a-VLAN
+nav_order: 2
+---
+
 # 2.5.a-VLAN
 
 📘 **概要**  

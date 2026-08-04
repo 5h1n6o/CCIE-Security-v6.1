@@ -1,3 +1,9 @@
+---
+layout: default
+title: 1.6.c-Geolocation
+nav_order: 1
+---
+
 # 1.6.c-Geolocation
 
 📘 **概要**  

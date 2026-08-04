@@ -1,3 +1,9 @@
+---
+layout: default
+title: 3.1-Device-hardening
+nav_order: 3
+---
+
 # 3.1-Device-hardening
 
 📘 **概要**  

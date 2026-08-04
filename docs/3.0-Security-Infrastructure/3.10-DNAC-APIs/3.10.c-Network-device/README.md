@@ -1,3 +1,9 @@
+---
+layout: default
+title: 3.10.c-Network-device
+nav_order: 3
+---
+
 # 3.10.c-Network-device
 
 📘 **概要**  

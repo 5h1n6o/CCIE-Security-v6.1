@@ -1,3 +1,9 @@
+---
+layout: default
+title: 4.3-Admin-access
+nav_order: 4
+---
+
 # 4.3-Admin-access
 
 📘 **概要**  

@@ -1,3 +1,9 @@
+---
+layout: default
+title: 1.7-Attack-detection
+nav_order: 1
+---
+
 # 1.7-Attack-detection
 
 📘 **概要**  

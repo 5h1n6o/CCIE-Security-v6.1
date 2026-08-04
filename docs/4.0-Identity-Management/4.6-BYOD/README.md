@@ -1,3 +1,9 @@
+---
+layout: default
+title: 4.6-BYOD
+nav_order: 4
+---
+
 # 4.6-BYOD
 
 📘 **概要**  

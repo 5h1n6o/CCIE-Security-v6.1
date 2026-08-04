@@ -1,3 +1,9 @@
+---
+layout: default
+title: 5.9-SMA
+nav_order: 5
+---
+
 # 5.9-SMA
 
 📘 **概要**  

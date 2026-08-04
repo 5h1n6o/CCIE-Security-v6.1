@@ -1,3 +1,9 @@
+---
+layout: default
+title: 5.7.e-Encryption
+nav_order: 5
+---
+
 # 5.7.e-Encryption
 
 📘 **概要**  

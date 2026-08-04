@@ -1,3 +1,9 @@
+---
+layout: default
+title: 3.4.b-IPDT
+nav_order: 3
+---
+
 # 3.4.b-IPDT
 
 📘 **概要**  

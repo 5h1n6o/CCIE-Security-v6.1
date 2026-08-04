@@ -1,3 +1,9 @@
+---
+layout: default
+title: 3.8-Cisco-SAFE
+nav_order: 3
+---
+
 # 3.8-Cisco-SAFE
 
 📘 **概要**  

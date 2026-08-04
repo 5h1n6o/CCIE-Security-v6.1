@@ -1,3 +1,9 @@
+---
+layout: default
+title: 1.6-NGFW-features
+nav_order: 1
+---
+
 # 1.6-NGFW-features
 
 📘 **概要**  

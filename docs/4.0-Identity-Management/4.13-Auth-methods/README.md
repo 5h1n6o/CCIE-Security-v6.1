@@ -1,3 +1,9 @@
+---
+layout: default
+title: 4.13-Auth-methods
+nav_order: 4
+---
+
 # 4.13-Auth-methods
 
 📘 **概要**  
