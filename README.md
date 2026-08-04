@@ -1,4 +1,4 @@
-# 📚 Blueprint Index（自動リンク）
+# 📚 Blueprint Index
 
 ## 1.0 Perimeter Security and Intrusion Prevention
 - [1.1 Deployment modes on ASA/FTD](docs/1.0-Perimeter-Security-and-Intrusion-Prevention/1.1-Deployment-modes-on-ASA-FTD/README.md)
