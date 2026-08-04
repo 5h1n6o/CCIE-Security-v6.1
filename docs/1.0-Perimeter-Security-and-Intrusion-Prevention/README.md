@@ -1,5 +1,6 @@
 ---
 layout: default
+parent: CCIE Security v6.1
 title: 1.0-Perimeter-Security-and-Intrusion-Prevention
 nav_order: 1
 ---
