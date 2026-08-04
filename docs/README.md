@@ -1,8 +1,10 @@
 ---
+title: 1-Network-Infrastructure
+parent: CCIE Security v6.1
+nav_order: 2
 layout: default
-title: docs
-nav_order: docs
 ---
+
 
 # docs
 
