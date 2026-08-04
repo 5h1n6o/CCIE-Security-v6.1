@@ -9,9 +9,6 @@ nav_order: 1
 このリポジトリは **Cisco CCIE Security v6.1 Blueprint** に基づき、  
 学習内容・設定例・検証ログ・図解を体系的にまとめたものです。
 
-GitHub Pages によるドキュメントサイトとして閲覧できるように  
-`./` 以下に Blueprint 構成を再現しています。
-
 ---
 
 # 📚 Blueprint Index（自動リンク）
