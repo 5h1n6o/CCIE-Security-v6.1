@@ -1,6 +1,5 @@
 ---
 layout: default
-parent: CCIE Security v6.1
 title: 3.0-Security-Infrastructure
 nav_order: 3
 ---
@@ -8,43 +7,36 @@ nav_order: 3
 # 3.0-Security-Infrastructure
 
 📘 **概要**  
-このディレクトリは **CCIE Security v6.1 Blueprint** の該当項目を扱います。  
-技術概要、設定例、検証ログ、図、補足資料などを追加してください。
+このディレクトリは **CCIE Security v6.1 Blueprint** の該当項目を扱います。
 
 ---
 
 🔑 **要点（Key Points）**  
-- この項目の重要ポイントを箇条書きでまとめてください  
-- プロトコルの特徴、動作、制限事項など  
+- 重要ポイントを箇条書きでまとめてください  
 - 試験で問われやすい論点を整理  
 
 ---
 
-🎯 **試験対策（CCIE Security レベル）**  
+🎯 **試験対策（CCIE Automation レベル）**  
 - 実機で必ず検証すべき内容  
 - 試験で頻出する構成・トラブル  
-- コマンドの出力で注目すべきポイント  
-- 事前に暗記しておくべき事項  
+- コマンド出力で注目すべきポイント  
 
 ---
 
 🛠 **設定・検証コマンド（Config & Verification）**  
 ```
-# ここに設定例を追加
-# 例:
-# show running-config
-# show vpn-sessiondb anyconnect
-# show access-list
+# 設定例を追加
 ```
 
 ---
 
-🔗 **参考リソースリンク（Official / Useful Links）**  
-- Cisco Official Docs  
-- Cisco Live セッション  
-- Cisco Community  
-- INE / O'Reilly / Lab Guides  
-- RFC / 標準仕様  
+🔗 **参考リソースリンク**  
+- Cisco Docs  
+- Cisco Live  
+- pyATS / Genie  
+- Ansible / Terraform  
+- NETCONF / RESTCONF / YANG  
 
 ---
 
@@ -52,7 +44,5 @@ nav_order: 3
 - 学習メモ  
 - 図解  
 - 注意点  
-- 他項目との関連性  
 
 ---
-

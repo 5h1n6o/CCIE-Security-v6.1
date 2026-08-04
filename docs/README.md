@@ -1,12 +1,10 @@
 ---
 layout: default
-title: 5.7.e-Encryption
-nav_order: 5
-parent: 5.7-Email-security
-grand_parent: 5.0-Advanced-Threat-Protection
+title: docs
+nav_order: docs
 ---
 
-# 5.7.e-Encryption
+# docs
 
 📘 **概要**  
 このディレクトリは **CCIE Security v6.1 Blueprint** の該当項目を扱います。
