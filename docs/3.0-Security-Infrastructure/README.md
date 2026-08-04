@@ -1,5 +1,6 @@
 ---
 layout: default
+parent: CCIE Security v6.1
 title: 3.0-Security-Infrastructure
 nav_order: 3
 ---
