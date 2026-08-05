@@ -12,7 +12,7 @@ Cisco ASAおよびCisco Firepower Threat Defense (FTD) における**マルチ�
 
 ---
 
-# 📘 概要
+## 📘 概要
 
 *   **機能概要**: 物理リソース（CPU、メモリ、インターフェイス）を論理的に切り分け、仮想的な複数のファイアウォールインスタンスを作成します。
 *   **利用目的**: サービスプロバイダーによるマルチテナント収容、企業内での部門間分離、テスト環境と本番環境の共存などに利用されます。
@@ -22,7 +22,7 @@ Cisco ASAおよびCisco Firepower Threat Defense (FTD) における**マルチ�
 
 ---
 
-# 🔑 要点
+## 🔑 要点
 
 | 項目 | 内容 |
 | :--- | :--- |
@@ -36,7 +36,7 @@ Cisco ASAおよびCisco Firepower Threat Defense (FTD) における**マルチ�
 
 ---
 
-# 🏗 動作原理
+## 🏗 動作原理
 
 マルチコンテキスト環境は、3つの主要な実行スペースで構成されます。
 
@@ -58,7 +58,7 @@ Cisco ASAおよびCisco Firepower Threat Defense (FTD) における**マルチ�
 
 ---
 
-# ⚙ 動作シーケンス
+## ⚙ 動作シーケンス
 
 パケットが物理インターフェイスに着信した際、ASAはどのコンテキストに処理を渡すべきかを決定する**パケット分類（Classification）**を行います。
 
@@ -69,7 +69,7 @@ Cisco ASAおよびCisco Firepower Threat Defense (FTD) における**マルチ�
 
 ---
 
-# 🎯 試験対策（CCIE Securityラボ試験）
+## 🎯 試験対策（CCIE Securityラボ試験）
 
 ### Blueprintで重要なポイント
 *   **Active/Active Failoverとの組み合わせ**: マルチコンテキストモードは、ASAで Active/Active フェイルオーバーを実現するための必須条件です。各コンテキストを別々のFailover Groupに配置する手法が問われます。
@@ -91,7 +91,7 @@ Cisco ASAおよびCisco Firepower Threat Defense (FTD) における**マルチ�
 
 ---
 
-# 🛠 設定方法
+## 🛠 設定方法
 
 ### ASA (CLI) - 基本構成手順
 
@@ -122,7 +122,7 @@ Cisco ASAおよびCisco Firepower Threat Defense (FTD) における**マルチ�
 
 ---
 
-# 🔍 検証コマンド
+## 🔍 検証コマンド
 
 | 目的 | コマンド |
 | :--- | :--- |
@@ -134,7 +134,7 @@ Cisco ASAおよびCisco Firepower Threat Defense (FTD) における**マルチ�
 
 ---
 
-# 🚨 トラブルシュート
+## 🚨 トラブルシュート
 
 | 症状 | 原因 | 確認・対処方法 |
 | :--- | :--- | :--- |
@@ -146,7 +146,7 @@ Cisco ASAおよびCisco Firepower Threat Defense (FTD) における**マルチ�
 
 ---
 
-# ⚠ 制限事項
+## ⚠ 制限事項
 
 *   **RA-VPN (AnyConnect) 非対応**: ASAマルチコンテキストモード最大の制限事項です。モバイルVPNが必要な場合はシングルモードを使用します。
 *   **動的ルーティングの制限**: 古いOSバージョンではOSPFv3やBGPに制限がありましたが、最新（9.x以降）では多くが解消されています。ただし、マルチキャストルーティングは依然として一部制限があります。
@@ -154,7 +154,7 @@ Cisco ASAおよびCisco Firepower Threat Defense (FTD) における**マルチ�
 
 ---
 
-# 🔄 他技術との関連
+## 🔄 他技術との関連
 
 *   **High Availability (Failover)**: **Active/Active Failover** をサポートする唯一のモードです。2つのフェイルオーバーグループを作成し、コンテキストを分散させることで負荷分散を物理ユニット間で行います。
 *   **SNMP/Syslog**: システム全体で1つのSyslog/SNMPサーバを指定することも、各コンテキストで個別に設定することも可能です。
@@ -162,7 +162,7 @@ Cisco ASAおよびCisco Firepower Threat Defense (FTD) における**マルチ�
 
 ---
 
-# 🧩 比較表
+## 🧩 比較表
 
 ### Single vs Multi Context (ASA)
 
@@ -176,7 +176,7 @@ Cisco ASAおよびCisco Firepower Threat Defense (FTD) における**マルチ�
 
 ---
 
-# 💡 ベストプラクティス
+## 💡 ベストプラクティス
 
 *   **仮想MACの自動生成**: `mac-address auto` をグローバルで有効にし、各コンテキストのインターフェイスに一意のL2識別子を持たせます。
 *   **リソース制限の明示**: `default` クラスのままにせず、各コンテキストに適切な `class` を割り当ててDoS耐性を高めます。
@@ -184,7 +184,7 @@ Cisco ASAおよびCisco Firepower Threat Defense (FTD) における**マルチ�
 
 ---
 
-# 📝 ラボ学習・設定サンプル例
+## 📝 ラボ学習・設定サンプル例
 
 ### 1. マルチコンテキストモードへの切り替え
 *   **要件**: ASAをマルチコンテキストモードに変更し、再起動後に確認せよ。
@@ -278,7 +278,7 @@ context Context-B
 
 ---
 
-# ❓ 想定試験問題
+## ❓ 想定試験問題
 
 1.  **コンフィグ読解**: `allocate-interface GigabitEthernet0/1 sales` と設定されたコンテキスト内において、`show interface ip brief` を実行した際に表示されるインターフェイス名は？
     *   **正解**: `sales`（システムで割り当てられたエイリアス名が表示される）。
@@ -296,7 +296,7 @@ context Context-B
 
 ---
 
-# 🔗 参考リソース
+## 🔗 参考リソース
 
 *   **Cisco Live 動画/スライド**:
     *   [BRKSEC-3020: Troubleshooting Firewall Threat Defense (FTD)](https://www.ciscolive.com/on-demand/on-demand-library.html?search=BRKSEC-3020)
@@ -315,9 +315,8 @@ context Context-B
 
 ---
 
-📝 **補足（Notes）**  
+## 📝 **補足（Notes）**  
 - 学習メモ  
 - 図解  
 - 注意点  
 
----
