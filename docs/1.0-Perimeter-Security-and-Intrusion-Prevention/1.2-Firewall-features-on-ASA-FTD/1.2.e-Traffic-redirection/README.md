@@ -12,7 +12,7 @@ Cisco ASAおよびFirepower Threat Defense (FTD) における**サービスモ�
 
 ---
 
-# 📘 概要
+## 📘 概要
 
 *   **機能概要**: ファイアウォールエンジン（L3/L4処理）が受信したトラフィックを、特定のルールに基づいて次世代セキュリティサービス（L7処理）を担当するサービスモジュールへ「リダイレクト」します。
 *   **利用目的**: 
@@ -22,7 +22,7 @@ Cisco ASAおよびFirepower Threat Defense (FTD) における**サービスモ�
 
 ---
 
-# 🔑 要点
+## 🔑 要点
 
 | 項目 | 内容 |
 | :--- | :--- |
@@ -35,7 +35,7 @@ Cisco ASAおよびFirepower Threat Defense (FTD) における**サービスモ�
 
 ---
 
-# 🏗 動作原理
+## 🏗 動作原理
 
 ASAを例にとると、パケットはまずASAの基本エンジン（LINA）で処理され、その後Firepowerモジュールへ「横流し」されます。
 
@@ -57,7 +57,7 @@ Outgoing Packet
 
 ---
 
-# ⚙ 動作シーケンス
+## ⚙ 動作シーケンス
 
 1.  **パケット受信**: 物理インターフェイスでパケットを受信。
 2.  **基本検査**: ASA/LINAエンジンが既存コネクションの確認、ACL、NATを適用。
@@ -71,7 +71,7 @@ Outgoing Packet
 
 ---
 
-# 🎯 試験対策（CCIE Securityラボ試験）
+## 🎯 試験対策（CCIE Securityラボ試験）
 
 ### Blueprintで重要なポイント
 *   **リダイレクト対象の絞り込み**: 全トラフィックをリダイレクトするとパフォーマンスが低下するため、「HTTP/HTTPSのみ」や「特定のサブネットのみ」を `class-map` で指定する能力が問われます。
@@ -92,7 +92,7 @@ Outgoing Packet
 
 ---
 
-# 🛠 設定方法
+## 🛠 設定方法
 
 ### ASA (CLI) - Firepowerモジュールへのリダイレクト設定
 ```bash
@@ -120,7 +120,7 @@ FTDではSnortエンジンへのリダイレクトは「Access Control Policy」
 
 ---
 
-# 🔍 検証コマンド
+## 🔍 検証コマンド
 
 | 目的 | コマンド |
 | :--- | :--- |
@@ -132,7 +132,7 @@ FTDではSnortエンジンへのリダイレクトは「Access Control Policy」
 
 ---
 
-# 🚨 トラブルシュート
+## 🚨 トラブルシュート
 
 | 症状 | 原因 | 確認・対処方法 |
 | :--- | :--- | :--- |
@@ -143,7 +143,7 @@ FTDではSnortエンジンへのリダイレクトは「Access Control Policy」
 
 ---
 
-# ⚠ 制限事項
+## ⚠ 制限事項
 
 *   **ASAシングルモード限定**: 旧バージョンではマルチコンテキストモードでのSFRリダイレクトに厳しい制限がありました（現在は一部緩和されていますが、RA-VPNとの併用などに注意が必要です）。
 *   **パフォーマンス制限**: サービスモジュールへリダイレクトするパケット量に応じて、デバイス全体の最大スループットが低下します。
@@ -152,7 +152,7 @@ FTDではSnortエンジンへのリダイレクトは「Access Control Policy」
 
 ---
 
-# 🔄 他技術との関連
+## 🔄 他技術との関連
 
 *   **Access Control**: ACLで許可されたパケットのみが、次のフェーズとしてサービスモジュールへリダイレクトされます。
 *   **IPS**: リダイレクトされた先のSnortエンジンで実行される主要なセキュリティ機能です,。
@@ -161,7 +161,7 @@ FTDではSnortエンジンへのリダイレクトは「Access Control Policy」
 
 ---
 
-# 🧩 比較表
+## 🧩 比較表
 
 ### Inline vs Monitor-only (SFR)
 
@@ -174,7 +174,7 @@ FTDではSnortエンジンへのリダイレクトは「Access Control Policy」
 
 ---
 
-# 💡 ベストプラクティス
+## 💡 ベストプラクティス
 
 *   **段階的な導入**: 最初は `monitor-only` でリダイレクトを開始し、誤検知（False Positive）がないことを確認してから Inline に切り替えます。
 *   **重要トラフィックの選別**: OSPFやBGPなどのルーティングプロトコルは、サービスモジュールへリダイレクトせずにバイパスさせることで、モジュール負荷によるネイバー断を防ぎます。
@@ -182,7 +182,7 @@ FTDではSnortエンジンへのリダイレクトは「Access Control Policy」
 
 ---
 
-# 📝 ラボ学習・設定サンプル例
+## 📝 ラボ学習・設定サンプル例
 
 ### 1. 全IPトラフィックのリダイレクト (ASA)
 *   **要件**: InsideからOutsideへの全パケットをFirepowerで検査せよ。モジュール停止時は通信を遮断せよ。
@@ -225,7 +225,7 @@ FTDではSnortエンジンへのリダイレクトは「Access Control Policy」
 
 ---
 
-# ❓ 想定試験問題
+## ❓ 想定試験問題
 
 1.  **コンフィグ読解**: ASAのコンフィグに `sfr fail-open monitor-only` とある。モジュールがパケットを攻撃と判定した場合、パケットは破棄されるか？
     *   **正解**: 破棄されない。`monitor-only` モードはコピーを検査するだけであり、ASA本体はパケットをそのまま転送する。
@@ -240,7 +240,7 @@ FTDではSnortエンジンへのリダイレクトは「Access Control Policy」
 
 ---
 
-# 🔗 参考リソース
+## 🔗 参考リソース
 
 *   **Cisco Live動画/スライド**:
     *   [BRKSEC-2021: Firepower Threat Defense - Packet Flow and Troubleshooting](https://www.ciscolive.com/on-demand/on-demand-library.html?search=BRKSEC-2021)
@@ -255,9 +255,7 @@ FTDではSnortエンジンへのリダイレクトは「Access Control Policy」
 
 ---
 
-📝 **補足（Notes）**  
+## 📝 **補足（Notes）**  
 - 学習メモ  
 - 図解  
 - 注意点  
-
----
