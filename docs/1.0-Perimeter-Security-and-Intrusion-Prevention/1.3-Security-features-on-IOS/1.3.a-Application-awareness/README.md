@@ -12,7 +12,7 @@ Cisco IOS/IOS XEにおける**アプリケーション・アウェアネス（Ap
 
 ---
 
-# 📘 概要
+## 📘 概要
 
 *   **機能概要**: ポート番号（L4）だけでなく、パケットの内容（L7）に基づいてトラフィックを識別します。暗号化されたトラフィックでも、証明書のSNI（Server Name Indication）などから識別を試みます。
 *   **利用目的**:
@@ -22,7 +22,7 @@ Cisco IOS/IOS XEにおける**アプリケーション・アウェアネス（Ap
 
 ---
 
-# 🔑 要点
+## 🔑 要点
 
 | 項目 | 内容 |
 | :--- | :--- |
@@ -36,7 +36,7 @@ Cisco IOS/IOS XEにおける**アプリケーション・アウェアネス（Ap
 
 ---
 
-# 🏗 動作原理
+## 🏗 動作原理
 
 NBAR2は、パケットの最初の数数バイトをスキャンし、事前に定義されたシグネチャ（PDLM）と照合します。
 
@@ -58,7 +58,7 @@ Egress Interface
 
 ---
 
-# ⚙ 動作シーケンス
+## ⚙ 動作シーケンス
 
 1.  **プロトコル・ディスカバリ**: インターフェイスで有効にすると、通過するトラフィックをリアルタイムで分析・分類します。
 2.  **マッチング**: `class-map` 内で `match protocol` コマンドが実行されると、NBARエンジンがそのプロトコルに一致するパケットを識別します。
@@ -67,7 +67,7 @@ Egress Interface
 
 ---
 
-# 🎯 試験対策（CCIE Securityラボ試験）
+## 🎯 試験対策（CCIE Securityラボ試験）
 
 ### Blueprintで重要なポイント
 *   **ZBFWとの統合**: 単なる `match port` ではなく、`match protocol http url "*facebook*"` や `match protocol bittorrent` といった高度なマッチングが問われます。
@@ -88,7 +88,7 @@ Egress Interface
 
 ---
 
-# 🛠 設定方法
+## 🛠 設定方法
 
 ### 1. アプリケーション識別（NBAR2）の有効化
 ```bash
@@ -113,7 +113,7 @@ policy-map type inspect INSIDE_TO_OUTSIDE_POLICY
 
 ---
 
-# 🔍 検証コマンド
+## 🔍 検証コマンド
 
 | 目的 | コマンド |
 | :--- | :--- |
@@ -124,7 +124,7 @@ policy-map type inspect INSIDE_TO_OUTSIDE_POLICY
 
 ---
 
-# 🚨 トラブルシュート
+## 🚨 トラブルシュート
 
 | 症状 | 原因 | 確認・対処方法 |
 | :--- | :--- | :--- |
@@ -135,7 +135,7 @@ policy-map type inspect INSIDE_TO_OUTSIDE_POLICY
 
 ---
 
-# ⚠ 制限事項
+## ⚠ 制限事項
 
 *   **暗号化の壁**: ECH (Encrypted Client Hell) 等が普及すると、SNIベースの識別ができなくなる可能性があります。
 *   **パフォーマンス**: 大量のL7マッチングはルータのCPUリソースを消費するため、コアネットワークよりもアクセス層やブランチ拠点での適用が一般的です。
@@ -143,7 +143,7 @@ policy-map type inspect INSIDE_TO_OUTSIDE_POLICY
 
 ---
 
-# 🔄 他技術との関連
+## 🔄 他技術との関連
 
 *   **ZBFW (Zone-Based Firewall)**: アプリケーション層でのアクセス制御を実現するための主要なプラットフォームです。
 *   **QoS (Quality of Service)**: アプリケーションを識別し、音声トラフィックを優先（PQ）したり、YouTubeを制限（Policing）したりします。
@@ -151,7 +151,7 @@ policy-map type inspect INSIDE_TO_OUTSIDE_POLICY
 
 ---
 
-# 🧩 比較表
+## 🧩 比較表
 
 ### L4 Access-List vs NBAR2 (L7 Awareness)
 
@@ -164,7 +164,7 @@ policy-map type inspect INSIDE_TO_OUTSIDE_POLICY
 
 ---
 
-# 💡 ベストプラクティス
+## 💡 ベストプラクティス
 
 *   **シグネチャの定期更新**: `ip nbar protocol-pack` を使用して、最新のアプリケーション定義をロードします。
 *   **プロトコル・ディスカバリの活用**: ポリシーを適用する前に、まず `protocol-discovery` で現状のトラフィック傾向を把握します。
@@ -172,7 +172,7 @@ policy-map type inspect INSIDE_TO_OUTSIDE_POLICY
 
 ---
 
-# 📝 ラボ学習・設定サンプル例
+## 📝 ラボ学習・設定サンプル例
 
 ※以下の設定例は、Cisco IOS XE 環境を前提としています。
 
@@ -231,7 +231,7 @@ policy-map APP_MARKING
 
 ---
 
-# ❓ 想定試験問題
+## ❓ 想定試験問題
 
 1.  **コンフィグ読解**: `match protocol http host "*cisco.com*"` という設定がある。これは何を識別しようとしているか？
     *   **正解**: HTTPリクエストヘッダ内のHostフィールドに "cisco.com" を含む通信を識別する。
@@ -246,7 +246,7 @@ policy-map APP_MARKING
 
 ---
 
-# 🔗 参考リソース
+## 🔗 参考リソース
 
 *   **Configuration Guide**:
     *   [Cisco IOS XE NBAR2 Configuration Guide](https://www.cisco.com/c/en/us/td/docs/ios-xml/ios/qos_nbar/configuration/xe-16/qos-nbar-xe-16-book/nbar-prot-discovery-xe.html)
@@ -261,7 +261,7 @@ policy-map APP_MARKING
 
 ---
 
-📝 **補足（Notes）**  
+## 📝 **補足（Notes）**  
 - 学習メモ  
 - 図解  
 - 注意点  
