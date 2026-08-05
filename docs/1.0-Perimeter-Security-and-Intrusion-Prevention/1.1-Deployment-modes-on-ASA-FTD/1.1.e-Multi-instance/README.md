@@ -12,7 +12,7 @@ Cisco Firepower Threat Defense (FTD) における **マルチインスタンス�
 
 ---
 
-# 📘 概要
+## 📘 概要
 
 *   **機能概要**: 物理ハードウェアリソース（CPU、メモリ、インターフェイス）を論理的に分割し、それぞれに独自の FTD イメージ（Docker コンテナベース）を割り当てます。
 *   **利用目的**: リソースの競合を避ける必要がある複数の部門や顧客（テナント）間でのハードウェア共有、または開発環境と本番環境の隔離に使用されます。
@@ -23,7 +23,7 @@ Cisco Firepower Threat Defense (FTD) における **マルチインスタンス�
 
 ---
 
-# 🔑 要点
+## 🔑 要点
 
 | 項目 | 内容 |
 | :--- | :--- |
@@ -37,7 +37,7 @@ Cisco Firepower Threat Defense (FTD) における **マルチインスタンス�
 
 ---
 
-# 🏗 動作原理
+## 🏗 動作原理
 
 マルチインスタンスは、Cisco の **FXOS (Firepower eXtensible Operating System)** アーキテクチャに基づいています。
 
@@ -57,7 +57,7 @@ Cisco Firepower Threat Defense (FTD) における **マルチインスタンス�
 
 ---
 
-# ⚙ 動作シーケンス
+## ⚙ 動作シーケンス
 
 1.  **リソース定義**: 管理者が FXOS (Chassis Manager) にログインし、インスタンスに使用する CPU コア数、メモリ、インターフェイスを定義します。
 2.  **インスタンス生成**: FXOS が Docker コンテナとして FTD イメージをブートします。
@@ -67,7 +67,7 @@ Cisco Firepower Threat Defense (FTD) における **マルチインスタンス�
 
 ---
 
-# 🎯 試験対策（CCIE Securityラボ試験）
+## 🎯 試験対策（CCIE Securityラボ試験）
 
 ### Blueprintで重要なポイント
 *   **FXOS との連携**: ラボ試験において FTD インスタンスを「作成する」段階から問われる可能性があります。FXOS 側でのインターフェイス割り当て（Data ↔ Management）の理解が必須です。
@@ -88,7 +88,7 @@ Cisco Firepower Threat Defense (FTD) における **マルチインスタンス�
 
 ---
 
-# 🛠 設定方法
+## 🛠 設定方法
 
 ### 1. FXOS でのインターフェイス割り当て (Chassis Manager)
 物理インターフェイスを FTD インスタンスに渡す前に、FXOS で「Data」属性として設定する必要があります。
@@ -117,7 +117,7 @@ commit-buffer
 
 ---
 
-# 🔍 検証コマンド
+## 🔍 検証コマンド
 
 | 目的 | コマンド |
 | :--- | :--- |
@@ -128,7 +128,7 @@ commit-buffer
 
 ---
 
-# 🚨 トラブルシュート
+## 🚨 トラブルシュート
 
 | 症状 | 原因 | 確認コマンド | 対処方法 |
 | :--- | :--- | :--- | :--- |
@@ -139,7 +139,7 @@ commit-buffer
 
 ---
 
-# ⚠ 制限事項
+## ⚠ 制限事項
 
 *   **ハードウェア限定**: Firepower 4100/9300 以外のプラットフォーム（2100, 3100, 1000, 1100, ASAv/FTDv）では利用不可。
 *   **ライセンス**: インスタンスごとにベースライセンスが必要になる場合があります。
@@ -147,7 +147,7 @@ commit-buffer
 
 ---
 
-# 🔄 他技術との関連
+## 🔄 他技術との関連
 
 *   **Failover (HA)**: インスタンスレベルでの Active/Standby が可能。異なるシャーシ間のインスタンス同士でペアを組みます。
 *   **Routing**: インスタンスごとに独立したルーティングプロセス（OSPF, BGP等）が動作します。
@@ -155,7 +155,7 @@ commit-buffer
 
 ---
 
-# 🧩 比較表
+## 🧩 比較表
 
 ### Multi-instance (FTD) vs Multi-context (ASA)
 
@@ -169,7 +169,7 @@ commit-buffer
 
 ---
 
-# 💡 ベストプラクティス
+## 💡 ベストプラクティス
 
 *   **コア配分の最適化**: 1つのインスタンスに過剰なコアを割り当てず、Snort のスレッド数と物理コアのバランスを考慮します。
 *   **Out-of-band 管理**: FXOS の管理と FTD インスタンスの管理 IP は別々のサブネットに配置することを推奨します。
@@ -177,7 +177,7 @@ commit-buffer
 
 ---
 
-# 📝 ラボ学習・設定サンプル例
+## 📝 ラボ学習・設定サンプル例
 
 ### 1. FXOSでのデータインターフェイスの有効化
 *   **要件**: 物理ポート Ethernet 1/1 を FTD インスタンスで使用可能にせよ。
@@ -220,7 +220,7 @@ commit-buffer
 
 ---
 
-# ❓ 想定試験問題
+## ❓ 想定試験問題
 
 1.  **問題**: Firepower 9300 において、1つのセキュリティモジュール内で FTD インスタンスと ASA インスタンスを同時に実行できるか？
     *   **解答**: いいえ。現時点のアーキテクチャでは、1つのスロット（モジュール）につき1つのアプリケーションタイプ（FTD または ASA）のみがサポートされます。
@@ -235,7 +235,7 @@ commit-buffer
 
 ---
 
-# 🔗 参考リソース
+## 🔗 参考リソース
 
 *   **Configuration Guide**:
     *   [Cisco Firepower 4100/9300 FXOS Chassis Manager Configuration Guide - Multi-Instance](https://www.cisco.com/c/en/us/td/docs/security/firepower/fxos/fxos271/web_config/b_GUI_Config_Guide_FXOS_271/multi_instance.html)
@@ -252,9 +252,7 @@ commit-buffer
 
 ---
 
-📝 **補足（Notes）**  
+## 📝 **補足（Notes）**  
 - 学習メモ  
 - 図解  
 - 注意点  
-
----
