@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 1.12-Correlation-and-remediation
-nav_order: 1
+nav_order: 12
 parent: 1.0-Perimeter-Security-and-Intrusion-Prevention
 ---
 
