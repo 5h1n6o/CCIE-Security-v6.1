@@ -12,7 +12,7 @@ Cisco ASAおよびFirepower Threat Defense (FTD) における**ネットワー�
 
 ---
 
-# 📘 概要
+## 📘 概要
 
 *   **機能概要**: パケットがファイアウォールを通過する際に、送信元または宛先のIPアドレス/ポート番号を書き換える機能です。
 *   **利用目的**:
@@ -25,7 +25,7 @@ Cisco ASAおよびFirepower Threat Defense (FTD) における**ネットワー�
 
 ---
 
-# 🔑 要点
+## 🔑 要点
 
 | 項目 | 内容 |
 | :--- | :--- |
@@ -37,7 +37,7 @@ Cisco ASAおよびFirepower Threat Defense (FTD) における**ネットワー�
 
 ---
 
-# 🏗 動作原理
+## 🏗 動作原理
 
 NATは、パケットのルーティング決定とセキュリティチェックの間に密接に関連して動作します。
 
@@ -60,7 +60,7 @@ ASA/FTDでは、インターフェイスを跨ぐトラフィックに対してN
 
 ---
 
-# ⚙ 動作シーケンス
+## ⚙ 動作シーケンス
 
 ASA 8.3以降のNAT処理には厳格な優先順位があります。
 
@@ -76,7 +76,7 @@ ASA 8.3以降のNAT処理には厳格な優先順位があります。
 
 ---
 
-# 🎯 試験対策（CCIE Securityラボ試験）
+## 🎯 試験対策（CCIE Securityラボ試験）
 
 ### Blueprintで重要なポイント
 *   **NAT Orderの制御**: 試験では「特定のトラフィックだけNATを回避し、他はPATせよ」という問題が出ます。Manual NATをSection 1に配置するスキルが必須です。
@@ -97,7 +97,7 @@ ASA 8.3以降のNAT処理には厳格な優先順位があります。
 
 ---
 
-# 🛠 設定方法
+## 🛠 設定方法
 
 ### ASA (CLI) - Object NAT (Auto NAT)
 ```bash
@@ -127,7 +127,7 @@ nat (inside,outside) source static obj-local obj-local destination static obj-re
 
 ---
 
-# 🔍 検証コマンド
+## 🔍 検証コマンド
 
 | 目的 | コマンド |
 | :--- | :--- |
@@ -138,7 +138,7 @@ nat (inside,outside) source static obj-local obj-local destination static obj-re
 
 ---
 
-# 🚨 トラブルシュート
+## 🚨 トラブルシュート
 
 | 症状 | 原因 | 対処方法 |
 | :--- | :--- | :--- |
@@ -149,7 +149,7 @@ nat (inside,outside) source static obj-local obj-local destination static obj-re
 
 ---
 
-# ⚠ 制限事項
+## ⚠ 制限事項
 
 *   **同一インターフェイス間のNAT**: デフォルトでは禁止されていますが、`same-security-traffic permit intra-interface` 設定が必要です。
 *   **プロトコルの制限**: 一部の複雑なプロトコル（SIP, FTPなど）は、NAT通過のためにインスペクションが必要です。
@@ -157,7 +157,7 @@ nat (inside,outside) source static obj-local obj-local destination static obj-re
 
 ---
 
-# 🔄 他技術との関連
+## 🔄 他技術との関連
 
 *   **Access Control**: 一般的に、ACLのチェックはNAT変換後の宛先IPに対して行われます（ASAの設定に依存）。
 *   **Routing**: NAT変換後のパケットを送出するために、適切なEgressルートが必要です。
@@ -166,7 +166,7 @@ nat (inside,outside) source static obj-local obj-local destination static obj-re
 
 ---
 
-# 🧩 比較表
+## 🧩 比較表
 
 | 比較項目 | Object NAT (Auto NAT) | Manual NAT (Twice NAT) |
 | :--- | :--- | :--- |
@@ -177,7 +177,7 @@ nat (inside,outside) source static obj-local obj-local destination static obj-re
 
 ---
 
-# 💡 ベストプラクティス
+## 💡 ベストプラクティス
 
 *   **オブジェクトの活用**: IP直書きではなく、常にネットワークオブジェクトを使用して管理性を高めます。
 *   **PATプールの使用**: 変換後のIPが1つだけだとポート枯渇が起きる可能性がある場合、PATプール（Range）を使用します。
@@ -185,7 +185,7 @@ nat (inside,outside) source static obj-local obj-local destination static obj-re
 
 ---
 
-# 📝 ラボ学習・設定サンプル例
+## 📝 ラボ学習・設定サンプル例
 
 ### 1. ダイナミックPAT (Hide NAT)
 *   **問題**: 内部192.168.1.0/24をOutsideインターフェイスのIPでPATせよ。
@@ -229,7 +229,7 @@ nat (inside,outside) source static obj-local obj-local destination static obj-re
 
 ---
 
-# ❓ 想定試験問題
+## ❓ 想定試験問題
 
 1.  **問題**: `show nat` の出力で、特定のManual NATルールの下に多数のObject NATルールが表示されている。Manual NATを一番最後に処理させるにはどう設定すべきか？
     *   **解答**: `nat` コマンドに `after-auto` キーワードを付与して設定する。
@@ -244,7 +244,7 @@ nat (inside,outside) source static obj-local obj-local destination static obj-re
 
 ---
 
-# 🔗 参考リソース
+## 🔗 参考リソース
 
 *   **Configuration Guides**:
     *   [Cisco ASA Series Firewall CLI Configuration Guide, 9.4 - NAT](https://www.cisco.com/c/en/us/td/docs/security/asa/asa94/configuration/firewall/asa-94-firewall-config/nat-overview.html)
@@ -259,9 +259,8 @@ nat (inside,outside) source static obj-local obj-local destination static obj-re
     *   FTD NAT Configuration via FMC (Cisco Community)
 ---
 
-📝 **補足（Notes）**  
+## 📝 **補足（Notes）**  
 - 学習メモ  
 - 図解  
 - 注意点  
 
----
