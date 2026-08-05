@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 1.7-Attack-detection
-nav_order: 1
+nav_order: 7
 parent: 1.0-Perimeter-Security-and-Intrusion-Prevention
 ---
 
