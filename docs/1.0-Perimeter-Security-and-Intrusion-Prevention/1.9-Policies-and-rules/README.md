@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 1.9-Policies-and-rules
-nav_order: 1
+nav_order: 9
 parent: 1.0-Perimeter-Security-and-Intrusion-Prevention
 ---
 
