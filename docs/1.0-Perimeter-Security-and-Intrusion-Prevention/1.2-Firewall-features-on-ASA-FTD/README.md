@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 1.2-Firewall-features-on-ASA-FTD
-nav_order: 1
+nav_order: 2
 parent: 1.0-Perimeter-Security-and-Intrusion-Prevention
 ---
 
