@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 1.11-Network-connectivity
-nav_order: 1
+nav_order: 11
 parent: 1.0-Perimeter-Security-and-Intrusion-Prevention
 ---
 
