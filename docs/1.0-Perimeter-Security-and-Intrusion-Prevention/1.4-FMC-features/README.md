@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 1.4-FMC-features
-nav_order: 1
+nav_order: 4
 parent: 1.0-Perimeter-Security-and-Intrusion-Prevention
 ---
 
