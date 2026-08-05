@@ -12,7 +12,7 @@ Cisco ASAおよびFirepower Threat Defense (FTD) における**アイデンテ�
 
 ---
 
-# 📘 概要
+## 📘 概要
 
 *   **機能概要**: Active Directory (AD) や Cisco ISE などのアイデンティティソースから取得した「ユーザー名とIPアドレスの紐付け」情報を利用し、ファイアウォールポリシー（ACL/ACP）を適用します。
 *   **利用目的**: IPアドレス管理の複雑さを解消し、ユーザーの職務権限に応じた一貫したセキュリティレベルを維持するために利用されます。
@@ -22,7 +22,7 @@ Cisco ASAおよびFirepower Threat Defense (FTD) における**アイデンテ�
 
 ---
 
-# 🔑 要点
+## 🔑 要点
 
 | 項目 | 内容 |
 | :--- | :--- |
@@ -36,7 +36,7 @@ Cisco ASAおよびFirepower Threat Defense (FTD) における**アイデンテ�
 
 ---
 
-# 🏗 動作原理
+## 🏗 動作原理
 
 IDFWは、アイデンティティソースからパケット転送パスへ情報を供給するアーキテクチャに基づいています。
 
@@ -56,7 +56,7 @@ IDFWは、アイデンティティソースからパケット転送パスへ情�
 
 ---
 
-# ⚙ 動作シーケンス
+## ⚙ 動作シーケンス
 
 1.  **情報の取得（パッシブ認証）**: ユーザーがPCでADにログインします。ADのセキュリティログを **Cisco AD Agent** または **Cisco ISE (via pxGrid)** が読み取り、デバイス（ASA/FTD）へ「IP:10.1.1.5 = ユーザー:John」という情報を通知します。
 2.  **マップの生成**: デバイスはローカルの **User-IP Table** にこの情報を格納します。
@@ -67,7 +67,7 @@ IDFWは、アイデンティティソースからパケット転送パスへ情�
 
 ---
 
-# 🎯 試験対策（CCIE Securityラボ試験）
+## 🎯 試験対策（CCIE Securityラボ試験）
 
 ### Blueprintで重要なポイント
 *   **Identity Sourceの優先順位**: ラボでは「ISEからの情報を優先せよ」といった条件が出る場合があります。
@@ -92,7 +92,7 @@ IDFWは、アイデンティティソースからパケット転送パスへ情�
 
 ---
 
-# 🛠 設定方法
+## 🛠 設定方法
 
 ### FTD (FMC管理) - Identity Firewall 設定
 1.  **Objects > Object Management > Realms**:
@@ -117,7 +117,7 @@ access-group IN_TO_OUT in interface inside
 
 ---
 
-# 🔍 検証コマンド
+## 🔍 検証コマンド
 
 | 目的 | コマンド (ASA/FTD) |
 | :--- | :--- |
@@ -129,7 +129,7 @@ access-group IN_TO_OUT in interface inside
 
 ---
 
-# 🚨 トラブルシュート
+## 🚨 トラブルシュート
 
 | 症状 | 原因 | 確認コマンド | 対処方法 |
 | :--- | :--- | :--- | :--- |
@@ -140,7 +140,7 @@ access-group IN_TO_OUT in interface inside
 
 ---
 
-# ⚠ 制限事項
+## ⚠ 制限事項
 
 *   **サポートされるディレクトリ**: 主にMicrosoft Active Directoryに最適化されています。
 *   **マップの正確性**: パッシブ認証のみの場合、ログオフイベントを正確に検知できない場合があります。
@@ -148,7 +148,7 @@ access-group IN_TO_OUT in interface inside
 
 ---
 
-# 🔄 他技術との関連
+## 🔄 他技術との関連
 
 *   **Cisco ISE**: pxGrid を介した情報の供給により、より詳細なプロファイリング情報を共有可能。
 *   **TrustSec (SGT)**: Identity Policy で取得したユーザー情報に基づき SGT を付与する構成が一般的。
@@ -156,7 +156,7 @@ access-group IN_TO_OUT in interface inside
 
 ---
 
-# 🧩 比較表
+## 🧩 比較表
 
 ### パッシブ認証 vs アクティブ認証
 
@@ -169,7 +169,7 @@ access-group IN_TO_OUT in interface inside
 
 ---
 
-# 💡 ベストプラクティス
+## 💡 ベストプラクティス
 
 *   **階層型アプローチ**: まずパッシブ認証を試み、不明な場合のみアクティブ認証（Captive Portal）にフォールバックさせる設計が推奨されます。
 *   **ISEの活用**: 可能であればAD Agentではなく、pxGrid を介した ISE との連携を選択し、セキュリティ情報の統合性を高めます。
@@ -177,7 +177,7 @@ access-group IN_TO_OUT in interface inside
 
 ---
 
-# 📝 ラボ学習・設定サンプル例
+## 📝 ラボ学習・設定サンプル例
 
 ### 1. FTD Realm の作成 (AD)
 *   **要件**: `cisco.com` ドメインのADと同期せよ。
@@ -221,7 +221,7 @@ access-group IN_TO_OUT in interface inside
 
 ---
 
-# ❓ 想定試験問題
+## ❓ 想定試験問題
 
 1.  **コンフィグ読解**: FMCのIdentity Policyで「Passive Authentication」が設定されているが、実際のパケットがドロップされる。原因として最も可能性が高いのは？
     *   **正解**: ADサーバーとの同期が失敗している、あるいはパケットの送信元IPに対するマップ情報がFMC/FTDに存在しない。
@@ -236,7 +236,7 @@ access-group IN_TO_OUT in interface inside
 
 ---
 
-# 🔗 参考リソース
+## 🔗 参考リソース
 
 *   **Configuration Guides**:
     *   [Cisco ASA Series Firewall CLI Configuration Guide, 9.4 - Identity Firewall](https://www.cisco.com/c/en/us/td/docs/security/asa/asa94/configuration/firewall/asa-94-firewall-config/idfw.html)
@@ -251,9 +251,8 @@ access-group IN_TO_OUT in interface inside
 
 ---
 
-📝 **補足（Notes）**  
+## 📝 **補足（Notes）**  
 - 学習メモ  
 - 図解  
 - 注意点  
 
----
