@@ -12,7 +12,7 @@ Cisco ASAおよびFirepower Threat Defense (FTD) における**アプリケー�
 
 ---
 
-# 📘 概要
+## 📘 概要
 
 *   **機能概要**: パケットのペイロードをスキャンし、プロトコル固有の規則に準拠しているかを確認します。また、埋め込まれたIPアドレスの書き換えや、必要に応じてダイナミックなデータチャネルを自動的に解放します。
 *   **利用目的**:
@@ -22,7 +22,7 @@ Cisco ASAおよびFirepower Threat Defense (FTD) における**アプリケー�
 
 ---
 
-# 🔑 要点
+## 🔑 要点
 
 | 項目 | 内容 |
 | :--- | :--- |
@@ -35,7 +35,7 @@ Cisco ASAおよびFirepower Threat Defense (FTD) における**アプリケー�
 
 ---
 
-# 🏗 動作原理
+## 🏗 動作原理
 
 アプリケーションインスペクションは、ASAの**Modular Policy Framework (MPF)** アーキテクチャの一部として動作します。
 
@@ -58,7 +58,7 @@ Egress Interface (送出)
 
 ---
 
-# ⚙ 動作シーケンス
+## ⚙ 動作シーケンス
 
 1.  **クラス分類**: クラスマップ（Class Map）が対象のトラフィック（例：TCP 21番ポート）を識別します。
 2.  **インスペクション呼び出し**: ポリシーマップ（Policy Map）内で `inspect` コマンドが実行され、対応するアプリケーション用エンジンが呼び出されます。
@@ -68,7 +68,7 @@ Egress Interface (送出)
 
 ---
 
-# 🎯 試験対策（CCIE Securityラボ試験）
+## 🎯 試験対策（CCIE Securityラボ試験）
 
 ### Blueprintで重要なポイント
 *   **ICMP Inspectionの欠如**: ASAはデフォルトでICMPインスペクションが無効です。これにより、InsideからのPingに対する戻りのパケット（Echo Reply）がOutside ACLで拒否されるトラブルシュート問題が頻出します。
@@ -89,7 +89,7 @@ Egress Interface (送出)
 
 ---
 
-# 🛠 設定方法
+## 🛠 設定方法
 
 ### ASA (CLI) - ICMPインスペクションの有効化
 ```bash
@@ -114,7 +114,7 @@ service-policy global_policy global
 
 ---
 
-# 🔍 検証コマンド
+## 🔍 検証コマンド
 
 | 目的 | コマンド |
 | :--- | :--- |
@@ -125,7 +125,7 @@ service-policy global_policy global
 
 ---
 
-# 🚨 トラブルシュート
+## 🚨 トラブルシュート
 
 | 症状 | 原因 | 確認コマンド | 対処方法 |
 | :--- | :--- | :--- | :--- |
@@ -136,7 +136,7 @@ service-policy global_policy global
 
 ---
 
-# ⚠ 制限事項
+## ⚠ 制限事項
 
 *   **暗号化パケット**: SSL/TLSで暗号化されたペイロードの中身をインスペクションすることはできません。これを行うには、SSL Decryption（FTDのSSL Policy等）が必要です。
 *   **パフォーマンス**: 深いプロトコル検査はスループットに影響を与えます。大量のトラフィックを処理する場合、不要なインスペクション（ESMTP等）をオフにする設計が必要です。
@@ -144,7 +144,7 @@ service-policy global_policy global
 
 ---
 
-# 🔄 他技術との関連
+## 🔄 他技術との関連
 
 *   **Access Control**: ACLはレイヤ4までのポートを静的に制御しますが、インスペクションはそれを動的に補完します。
 *   **NAT**: ペイロードにIPアドレスを埋め込むプロトコル（FTP, SIP, SQLNet）において、NAT変換の一貫性を保つために必須です。
@@ -153,7 +153,7 @@ service-policy global_policy global
 
 ---
 
-# 🧩 比較表
+## 🧩 比較表
 
 ### ASA MPF Inspection vs FTD Snort Inspection
 
@@ -166,7 +166,7 @@ service-policy global_policy global
 
 ---
 
-# 💡 ベストプラクティス
+## 💡 ベストプラクティス
 
 *   **ICMPの原則有効化**: ネットワークの診断（Traceroute含む）を容易にするため、ラボ試験では最初に `inspect icmp` を有効にすることが推奨されます。
 *   **不要なインスペクションの無効化**: デフォルトの `inspection_default` クラスから、環境で使用しないプロトコル（例：H323, Skinny）を削除することでリソースを節約します。
@@ -174,7 +174,7 @@ service-policy global_policy global
 
 ---
 
-# 📝 ラボ学習・設定サンプル例
+## 📝 ラボ学習・設定サンプル例
 
 ### 1. 基本的なICMPインスペクション
 *   **要件**: InsideからのPingに対する戻り通信を、ACLを追加せずに許可せよ。
@@ -233,7 +233,7 @@ service-policy global_policy global
 
 ---
 
-# ❓ 想定試験問題
+## ❓ 想定試験問題
 
 1.  **問題**: ASAで内部ホストから外部へのPingは通るが、Tracerouteの応答が返ってこない。原因と対策は？
     *   **解答**: デフォルトでは `inspect icmp` が無効であり、かつ `inspect icmp error` も無効であるため。対策として `inspect icmp error` をポリシーに追加する。
@@ -248,7 +248,7 @@ service-policy global_policy global
 
 ---
 
-# 🔗 参考リソース
+## 🔗 参考リソース
 
 *   **Configuration Guide**:
     *   [Cisco ASA Series Firewall CLI Configuration Guide, 9.4 - Getting Started with MPF](https://www.cisco.com/c/en/us/td/docs/security/asa/asa94/configuration/firewall/asa-94-firewall-config/inspect-mpf.html)
@@ -264,9 +264,7 @@ service-policy global_policy global
 
 ---
 
-📝 **補足（Notes）**  
+## 📝 **補足（Notes）**  
 - 学習メモ  
 - 図解  
 - 注意点  
-
----
