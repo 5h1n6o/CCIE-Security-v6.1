@@ -1,7 +1,8 @@
 ---
 layout: default
-title: 1.11.b-Network-connectivity-through-FTD
-nav_order: 1
+title: 1.11.b Network connectivity through Cisco FTD
+
+nav_order: 2
 parent: 1.11-Network-connectivity
 grand_parent: 1.0-Perimeter-Security-and-Intrusion-Prevention
 ---
