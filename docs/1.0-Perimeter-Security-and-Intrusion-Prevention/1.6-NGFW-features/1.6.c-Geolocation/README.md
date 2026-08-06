@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 1.6.c-Geolocation
-nav_order: 1
+nav_order: 3
 parent: 1.6-NGFW-features
 grand_parent: 1.0-Perimeter-Security-and-Intrusion-Prevention
 ---
