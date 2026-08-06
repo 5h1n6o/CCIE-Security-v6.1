@@ -1,12 +1,12 @@
 ---
 layout: default
-title: 1.8-Clustering-and-high-availability-features-on-Cisco-ASA
+title: 1.8.a Clustering and HA features on ASA
 nav_order: 1
 parent: 1.8-Clustering-and-HA
 grand_parent: 1.0-Perimeter-Security-and-Intrusion-Prevention
 ---
 
-# 1.8 Clustering and high availability features on Cisco ASA
+# 1.8.a Clustering and high availability features on Cisco ASA
 
 Cisco ASA における**ハイアベイラビリティ (HA)** と**クラスタリング (Clustering)** は、ネットワークの継続性を確保し、スケーラビリティを向上させるための重要な基盤技術です。HA（主にフェイルオーバー）は 2 台のデバイス間での冗長性を提供し、クラスタリングは複数台（最大 16 台）を論理的な 1 台として動作させることで、スループットの拡張と冗長性を同時に実現します。
 
