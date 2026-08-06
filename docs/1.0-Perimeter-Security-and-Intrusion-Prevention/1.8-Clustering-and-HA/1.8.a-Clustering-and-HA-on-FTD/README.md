@@ -1,3 +1,10 @@
+---
+layout: default
+title: 1.8-Clustering-and-high-availability-features-on-Cisco-FTD
+parent: 1.8-Clustering-and-HA
+grand_parent: 1.0-Perimeter-Security-and-Intrusion-Prevention
+---
+
 # 1.8 Clustering and high availability features on Cisco FTD
 
 Cisco Secure Firewall (FTD) における **ハイアベイラビリティ (High Availability: HA)** と **クラスタリング (Clustering)** は、エンタープライズネットワークにおいてサービスの中断を最小限に抑え、トラフィックの増大に柔軟に対応するための重要な機能です。FTD は ASA と同様の基盤技術を継承しつつ、Firepower Management Center (FMC) による一元管理下で高度な冗長構成を実現します。
