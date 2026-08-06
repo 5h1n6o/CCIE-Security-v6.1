@@ -6,7 +6,7 @@ parent: 1.11-Network-connectivity
 grand_parent: 1.0-Perimeter-Security-and-Intrusion-Prevention
 ---
 
-# 1.11 Network connectivity through Cisco ASA
+# 1.11.b Network connectivity through Cisco ASA
 
 Cisco ASA（Adaptive Security Appliance）におけるネットワーク接続は、ファイアウォールの基本となる機能であり、パケットがデバイスを通過する際の制御、ルーティング、および管理を司ります。CCIE Security ラボ試験では、インターフェイスの基本設定から、パケット処理の内部シーケンスの理解、および高度なトラブルシューティングツール（Packet Tracer や Capture）の活用能力が厳しく問われます。
 
