@@ -1,6 +1,7 @@
 ---
 layout: default
 title: 1.8-Clustering-and-high-availability-features-on-Cisco-ASA
+nav_order: 1
 parent: 1.8-Clustering-and-HA
 grand_parent: 1.0-Perimeter-Security-and-Intrusion-Prevention
 ---
