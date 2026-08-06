@@ -1,4 +1,11 @@
-# 1.11 Network connectivity through Cisco FTD
+---
+layout: default
+title: 1.11.b-Network-connectivity-through-FTD
+nav_order: 1
+parent: 1.11-Network-connectivity
+grand_parent: 1.0-Perimeter-Security-and-Intrusion-Prevention
+---
+# 1.11.b Network connectivity through Cisco FTD
 
 Cisco Secure Firewall (FTD) におけるネットワーク接続は、従来の ASA の堅牢な L3/L4 転送能力（LINA エンジン）と、Snort による高度な脅威防御を統合したアーキテクチャに基づいています。CCIE Security ラボ試験では、Firepower Management Center (FMC) を介したインターフェイス、ゾーン、およびルーティングの正確な実装に加え、Snort エンジンがパケット転送にどのように介入するかを深く理解していることが求められます。
 
