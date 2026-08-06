@@ -1,3 +1,11 @@
+---
+layout: default
+title: 1.9.a-Policies-and-rules-for-traffic-control-on-ASA
+nav_order: 1
+parent: 1.9-Policies-and-rules
+grand_parent: 1.0-Perimeter-Security-and-Intrusion-Prevention
+---
+
 # 1.9 Policies and rules for traffic control on Cisco ASA
 
 Cisco ASA における**トラフィック制御のポリシーとルール**は、単純な L3/L4 のアクセス制御リスト (ACL) に留まらず、オブジェクト指向の管理、Modular Policy Framework (MPF) による詳細なインスペクション、およびパケット処理の順序（Order of Operations）を包含する概念です。CCIE Security ラボ試験では、複雑な要件を最小限のルールで、かつパフォーマンスに配慮して実装する能力が問われます。
