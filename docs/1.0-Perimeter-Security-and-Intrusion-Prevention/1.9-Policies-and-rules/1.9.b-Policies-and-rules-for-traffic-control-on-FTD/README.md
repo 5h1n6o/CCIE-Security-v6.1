@@ -1,12 +1,12 @@
 ---
 layout: default
-title: 1.9.b-Policies-and-rules-for-traffic-control-on-FTD
+title: 1.9.b Policies and rules for traffic control on FTD
 nav_order: 1
 parent: 1.9-Policies-and-rules
 grand_parent: 1.0-Perimeter-Security-and-Intrusion-Prevention
 ---
 
-# 1.9 Policies and rules for traffic control on Cisco FTD
+# 1.9.b Policies and rules for traffic control on Cisco FTD
 
 Cisco Firepower Threat Defense (FTD) におけるトラフィック制御は、**Access Control Policy (ACP)** を核とした高度に統合されたポリシー体系に基づいています。従来のファイアウォール（ASA）の L3/L4 制御に加え、アプリケーション制御 (AVC)、URL フィルタリング、侵入防御 (IPS)、ファイル制御/マルウェア防御 (AMP) などの次世代機能を一つのポリシー内で一元的に管理します。
 
