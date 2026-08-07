@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 2.3-FlexVPN-DMVPN-IPsec
-nav_order: 2
+nav_order: 3
 parent: 2.0-Secure-Connectivity-and-Segmentation
 ---
 
