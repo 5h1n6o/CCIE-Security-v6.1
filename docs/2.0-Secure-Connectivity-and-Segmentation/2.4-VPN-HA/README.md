@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 2.4-VPN-HA
-nav_order: 2
+nav_order: 4
 parent: 2.0-Secure-Connectivity-and-Segmentation
 ---
 
