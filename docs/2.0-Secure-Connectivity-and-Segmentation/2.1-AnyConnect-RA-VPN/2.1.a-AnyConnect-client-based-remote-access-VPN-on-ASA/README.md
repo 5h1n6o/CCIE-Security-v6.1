@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 2.1.a Cisco AnyConnect client-based, remote-access VPN technologies on Cisco ASA
-nav_order: 2
+nav_order: 1
 parent: 2.1-AnyConnect-RA-VPN
 grand_parent: 2.0-Secure-Connectivity-and-Segmentation
 ---
