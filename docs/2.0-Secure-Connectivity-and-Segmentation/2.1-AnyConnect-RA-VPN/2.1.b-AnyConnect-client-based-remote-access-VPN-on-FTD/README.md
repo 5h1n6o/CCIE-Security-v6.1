@@ -1,4 +1,12 @@
-# 2.1 Cisco AnyConnect client-based, remote-access VPN technologies on Cisco FTD
+---
+layout: default
+title: 2.1.b Cisco AnyConnect client-based, remote-access VPN technologies on Cisco FTD
+nav_order: 2
+parent: 2.1-AnyConnect-RA-VPN
+grand_parent: 2.0-Secure-Connectivity-and-Segmentation
+---
+
+# 2.1.b Cisco AnyConnect client-based, remote-access VPN technologies on Cisco FTD
 
 Cisco Secure Firewall (FTD) における **AnyConnect リモートアクセス VPN (RA VPN)** は、Cisco Firepower Management Center (FMC) または Firepower Device Manager (FDM) を通じて一元管理される強力なセキュア接続ソリューションです。FTD は内部的に LINA エンジン（ASA ベースのコード）を使用して VPN 通信を処理するため、ASA の堅牢な VPN 機能を引き継ぎつつ、Snort による高度な脅威防御と統合されています。
 
