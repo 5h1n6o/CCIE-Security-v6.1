@@ -18,7 +18,7 @@ parent: 1.0-Perimeter-Security-and-Intrusion-Prevention
 
 ---
 
-🎯 **試験対策（CCIE Automation レベル）**  
+🎯 **試験対策**  
 - 実機で必ず検証すべき内容  
 - 試験で頻出する構成・トラブル  
 - コマンド出力で注目すべきポイント  
