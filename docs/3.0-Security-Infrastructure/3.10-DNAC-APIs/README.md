@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 3.10-DNAC-APIs
-nav_order: 3
+nav_order: 10
 parent: 3.0-Security-Infrastructure
 ---
 
