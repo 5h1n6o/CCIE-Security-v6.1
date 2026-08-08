@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 3.9-APIs
-nav_order: 3
+nav_order: 9
 parent: 3.0-Security-Infrastructure
 ---
 
