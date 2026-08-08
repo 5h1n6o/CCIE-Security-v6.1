@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 3.4-L2-security
-nav_order: 3
+nav_order: 4
 parent: 3.0-Security-Infrastructure
 ---
 
