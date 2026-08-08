@@ -1,3 +1,11 @@
+---
+layout: default
+title: 2.3.b DMVPN
+nav_order: 1
+parent: 2.3-FlexVPN-DMVPN-IPsec
+grand_parent: 2.0-Secure-Connectivity-and-Segmentation
+---
+
 # 2.3.b DMVPN (Dynamic Multipoint VPN)
 
 DMVPNは、ハブアンドスポーク型またはフルメッシュ型のVPNトポロジを動的かつスケーラブルに構築するためのCisco独自のソリューションです。従来のGRE over IPsecでは、各拠点（スポーク）ごとに固定のトンネル設定が必要でしたが、DMVPNは **mGRE (Multipoint GRE)** と **NHRP (Next Hop Resolution Protocol)** を組み合わせることで、スポーク側の動的IPアドレス環境下でも、最小限の設定で数千の拠点を収容することを可能にします。
