@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 2.4.a-ASA-VPN-clustering
-nav_order: 2
+nav_order: 1
 parent: 2.4-VPN-HA
 grand_parent: 2.0-Secure-Connectivity-and-Segmentation
 ---
