@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 3.7-Compliance
-nav_order: 3
+nav_order: 7
 parent: 3.0-Security-Infrastructure
 ---
 
