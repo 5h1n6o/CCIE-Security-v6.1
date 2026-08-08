@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 2.2-IOS-CA
-nav_order: 2
+nav_order: 1
 parent: 2.0-Secure-Connectivity-and-Segmentation
 ---
 
