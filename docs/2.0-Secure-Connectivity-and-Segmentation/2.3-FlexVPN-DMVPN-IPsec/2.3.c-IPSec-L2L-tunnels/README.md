@@ -1,3 +1,11 @@
+---
+layout: default
+title: 2.3.c IPsec L2L tunnels
+nav_order: 1
+parent: 2.3-FlexVPN-DMVPN-IPsec
+grand_parent: 2.0-Secure-Connectivity-and-Segmentation
+---
+
 # 2.3.c IPsec L2L tunnels
 
 Cisco ASA、Firepower Threat Defense (FTD)、および IOS-XE ルータ間での **IPsec LAN-to-LAN (L2L) トンネル**の実装は、セキュアな拠点間接続の基盤です。CCIE Security ラボ試験では、従来の **Crypto Map** ベースの VPN に加え、ルーティングの柔軟性が高い **Virtual Tunnel Interface (VTI)**、および最新の **IKEv2** プロトコルを使用したプラットフォーム間（Cross-platform）の相互運用性が重要な評価ポイントとなります。
