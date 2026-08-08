@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 3.1.b-IP-source-routing
-nav_order: 3
+nav_order: 2
 parent: 3.1-Device-hardening
 grand_parent: 3.0-Security-Infrastructure
 ---
