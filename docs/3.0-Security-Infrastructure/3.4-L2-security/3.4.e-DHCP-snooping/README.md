@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 3.4.e-DHCP-snooping
-nav_order: 3
+nav_order: 5
 parent: 3.4-L2-security
 grand_parent: 3.0-Security-Infrastructure
 ---
