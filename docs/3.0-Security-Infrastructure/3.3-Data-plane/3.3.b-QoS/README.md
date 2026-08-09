@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 3.3.b-QoS
-nav_order: 3
+nav_order: 2
 parent: 3.3-Data-plane
 grand_parent: 3.0-Security-Infrastructure
 ---
