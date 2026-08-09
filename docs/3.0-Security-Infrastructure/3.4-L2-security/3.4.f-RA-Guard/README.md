@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 3.4.f-RA-Guard
-nav_order: 5
+nav_order: 6
 parent: 3.4-L2-security
 grand_parent: 3.0-Security-Infrastructure
 ---
