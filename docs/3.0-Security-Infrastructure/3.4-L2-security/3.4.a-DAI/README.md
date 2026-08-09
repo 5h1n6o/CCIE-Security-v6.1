@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 3.4.a-DAI
-nav_order: 3
+nav_order: 1
 parent: 3.4-L2-security
 grand_parent: 3.0-Security-Infrastructure
 ---
