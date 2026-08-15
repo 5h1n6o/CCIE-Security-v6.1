@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 3.5.e-AES
-nav_order: 3
+nav_order: 5
 parent: 3.5-Wireless-security
 grand_parent: 3.0-Security-Infrastructure
 ---
