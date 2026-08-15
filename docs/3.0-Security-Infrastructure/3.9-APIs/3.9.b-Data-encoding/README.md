@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 3.9.b-Data-encoding
-nav_order: 3
+nav_order: 2
 parent: 3.9-APIs
 grand_parent: 3.0-Security-Infrastructure
 ---
