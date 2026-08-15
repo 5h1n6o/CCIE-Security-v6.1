@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 4.1-ISE-scalability
-nav_order: 4
+nav_order: 1
 parent: 4.0-Identity-Management
 ---
 
