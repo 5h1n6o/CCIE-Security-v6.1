@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 4.5-Guest-lifecycle
-nav_order: 4
+nav_order: 5
 parent: 4.0-Identity-Management
 ---
 
