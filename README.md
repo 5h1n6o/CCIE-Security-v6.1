@@ -76,9 +76,4 @@
 
 ---
 
-# 🧭 Navigation
-- [docs/](docs/) — 全 Blueprint の学習メモ  
-- GitHub Pages で閲覧する場合は `/docs/` が自動的にサイト化されます
-
----
 
