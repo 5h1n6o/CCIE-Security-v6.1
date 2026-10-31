@@ -8,18 +8,23 @@ grand_parent: 1.0-Perimeter-Security-and-Intrusion-Prevention
 
 # 1.6.c Geolocation
 
-Cisco Secure Firewall (FTD) における**ジオロケーション（Geolocation）**機能は、IP アドレスを地理的な位置（国や大陸）にマッピングし、その情報を基にトラフィックを制御・可視化する機能です。Firepower Management Center (FMC) が管理するジオロケーションデータベース（VDB と共に更新される GeoDB）を使用し、特定の地域からの攻撃遮断や、法規制（コンプライアンス）に基づいた通信制限を直感的に実装できます。
+Cisco Secure Firewall Threat Defense (FTD) および Management Center (FMC) における **Geolocation（地理位置情報機能 / GeoDB）** は、Cisco Talos が提供する **Geolocation Database (GeoDB)** を利用し、パブリック IP アドレスを地理的国・地域（ISO 国コード、国名、大陸）に対応付け、通信の送信元・宛先の地理的位置に基づいてアクセス制御や脅威フィルタリングを動的に実施する機能です。
+
+CCIE Security v6.1 Blueprint **1.6.c Geolocation** では、GeoDB の構造と更新メカニズム（自動・手動・エアギャップ環境）、Access Control Policy (ACP) の **`Location` 条件** におけるルールマッチング、Security Intelligence (SI) や Event Analytics との連携、RFC 1918 プライベート IP との境界関係、および GeoDB 更新時の **「Policy Deploy 不要」** という動作特性の正しい理解とトラブルシューティング能力が深く問われます。
 
 ---
 
 ## 📘 概要
 
-*   **機能概要**: 公有 IP アドレスのデータベースを参照し、パケットの送信元または宛先がどの国・地域に属するかを特定します。
-*   **利用目的**: 特定の国からのサイバー攻撃（DDoS やスキャン）の一括遮断、コンテンツ配信の地域制限、特定地域へのデータ転送禁止（データ漏洩防止）。
-*   **どのような場面で利用するか**: 
-    *   海外からの不正アクセスが急増している際の緊急防御。
-    *   国内ユーザーのみを対象とした Web サービスの公開。
-    *   セキュリティインテリジェンス（SI）と組み合わせた、脅威ベースの動的フィルタリング。
+* **機能概要**:
+  * パブリック IP アドレスと国 (Country)・大陸 (Continent) のマッピングテーブルである Cisco GeoDB を基盤とし、アクセス制御ルールや Security Intelligence の評価条件として「送信元/宛先の国・地域」を指定可能にする機能。
+  * 通信イベント（Intrusion Events、Connection Events、File Events）において、通信に関与したホストの国旗アイコンや国名、大陸情報をグラフィカルに自動表示・分析・フィルタリング可能にする。
+* **利用目的**:
+  * 個別のパブリック IP アドレスやサブネットブロックを管理者が手動で更新・登録することなく、特定の国や地域（例: サイバー攻撃の発生率が高い特定国、アノニマスプロキシ等）との通信を一括して動的にブロック・制御する。
+  * 特定地域のみをサービス対象とする公開 Web サーバーや DMZ ネットワークに対して、対象外地域からの不要な偵察・ポートスキャン・ブルートフォース攻撃をネットワーク境界で早期遮断し、ファイアウォールおよび内部サーバーの処理負荷を削減する。
+* **どのような場面で利用するか**:
+  * 海外拠点を持たない国内専用ビジネスの公開サーバーに対する、特定国発インバウンドアクセスのブロック（Inbound Geolocation Blocking）。
+  * 社内端末から、特定国に存在する不正 C2 サーバーやデータ漏洩先となり得る不審な地域宛てアウトバウンド通信の遮断（Outbound Geolocation Filtering）。
 
 ---
 
@@ -27,204 +32,558 @@ Cisco Secure Firewall (FTD) における**ジオロケーション（Geolocation
 
 | 項目 | 内容 |
 | :--- | :--- |
-| **特徴** | IP アドレスを国・都市・ドメインに紐付け。動的に更新されるデータベースを使用。 |
-| **用途** | リージョン制限、攻撃元遮断、コンプライアンス（輸出規制等）。 |
-| **メリット** | 膨大な IP リストを手動管理せず、国名指定で数千のサブネットを制御可能。 |
-| **デメリット** | データベースの正確性に依存（VPN やプロキシ経由の回避に弱い）。 |
-| **対応機種** | Firepower Threat Defense (FTD) 全モデル。 |
-| **制限事項** | **データベースの定期更新（GeoDB Update）**が不可欠。 |
-| **設計上の注意点** | 内部のプライベート IP は「Unknown」として処理されるため、ホワイトリスト設計に注意。 |
+| **データベース構造** | **Cisco Geolocation Database (GeoDB)**: IP アドレス ↔ ISO Country Code / Country Name / Continent マッピング |
+| **評価コンポーネント** | **Access Control Policy (ACP)**: Access Control Rules の `Location` (または Networks/Geolocation) タブ<br>**Security Intelligence (SI)**: Dynamic Feed / List 連携<br>**Events / Analytics**: Unified Events, Context Explorer, Geolocation Lookup |
+| **更新メカニズム** | FMC による自動定期更新（Weekly Scheduled Task）、または手動更新（Internet Direct Download / Air-gapped File Upload） |
+| **Policy Deploy 要件** | **Deploy 不要**（GeoDB 更新後、FMC から FTD へメモリ上更新データが自動同期され即座に適用される） |
+| **オブジェクト管理** | `Objects > Object Management > Geolocation` にて国・大陸を組み合わせた再利用可能なオブジェクトを定義 |
+| **対象 IP アドレス** | **ルーティング可能なパブリック IP アドレス専用**（RFC 1918 プライベート IP や NAT 前の内部 IP には適用不可） |
+| **ライセンス要件** | **Base License**（GeoDB による基本アクセス制御は追加ライセンス不要。ただし SI 連携時は Threat License が必要） |
+| **最新パッケージ構造** | バージョン 7.2+ 以降、制御用 Country Code パッケージと詳細文脈用 IP パッケージに分離提供 |
 
 ---
 
 ## 🏗 動作原理
 
-ジオロケーションは、アクセスコントロールエンジンがパケットを処理する際に、メモリ上の GeoDB を参照することで動作します。
+Geolocation 機能では、FTD のデータプレーン（Snort エンジン）のメモリ上に常駐する GeoDB インデックスを参照してパケットの送信元・宛先 IP アドレスを即時に地理識別します。
 
 ```text
-[ Incoming Packet ] (Source IP: 203.0.113.5)
-         ↓
-[ Security Intelligence / Access Control Policy ]
-         ↓
-[ GeoDB Lookup ] --- (IP 203.0.113.5 -> "Country: Japan")
-         ↓
-[ Policy Match ] --- (Rule: Block "Japan" -> NO / Rule: Permit "Japan" -> YES)
-         ↓
-[ Verdict ] --- (Allow / Block)
+[ Ingress Public Packet ] (e.g., Src IP: 203.0.113.50, Dst IP: 192.168.100.10)
+       │
+       ▼
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│ Firepower Threat Defense (FTD) Packet Processing Architecture                     │
+│                                                                                  │
+│  [ LINA Firewall Engine ]                                                        │
+│   ├── Sanity Checks & Existing Connection Lookup                                 │
+│   └── Ingress Interface Inbound Processing                                       │
+│            │                                                                     │
+│            ▼                                                                     │
+│  [ Snort Next-Gen Engine ]                                                       │
+│   ├── 1. In-Memory GeoDB Lookup                                                  │
+│   │        ├── Extract Src IP (203.0.113.50) ──► Match GeoDB ──► Country: China  │
+│   │        └── Extract Dst IP (192.168.100.10) ──► Private IP ──► Country: Unknown│
+│   │                                                                              │
+│   ├── 2. Security Intelligence Evaluation                                        │
+│   │        └── Check Geo-based SI Blacklist (If configured)                      │
+│   │                                                                              │
+│   ├── 3. Access Control Policy (ACP) Evaluation                                  │
+│   │        └── Match Rule "BLOCK_GEO_CN":                                        │
+│   │                 ├── Location Condition: Source = China                       │
+│   │                 └── Action: Block with Reset                                 │
+│   │                                                                              │
+│   └── 4. Action Enforcement & Logging                                            │
+│            ├── Send TCP RST / Drop Packet                                        │
+│            └── Generate Connection Event (Flag: 🇨🇳 / Src: China) ──► FMC         │
+└──────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## ⚙ 動作シーケンス
 
-1.  **GeoDB のロード**: FMC が最新のジオロケーションデータベース（GeoDB）を FTD に配布・ロードします。
-2.  **パケット受信**: FTD がインターフェイスで IP パケットを受信します。
-3.  **データベース照合**: パケットの送信元/宛先 IP アドレスをインデックスとして、GeoDB 内の国コード（ISO 3166）を検索します。
-4.  **ポリシー適用**: 
-    *   **Security Intelligence (SI)**: アクセスコントロールルール評価前の早い段階で、国別リストに基づいて遮断します。
-    *   **Access Control Policy (ACP)**: ルール内の「Geolocation」タブで定義された条件に基づき処理します。
-5.  **ロギング**: イベントログに国名が表示され、Analysis ダッシュボードで視覚化されます。
+1. **GeoDB のロードとメモリ常駐**:
+   * FTD の起動時および GeoDB アップデート時、Cisco GeoDB のバイナリマッピングテーブルが Snort エンジンのメモリ空間（RAM）へ直ちにロードされます。
+2. **パケットの着信と IP アドレス抽出**:
+   * インターフェイスに着信したパケットから、L3 送信元 IP アドレス (Src IP) および宛先 IP アドレス (Dst IP) が抽出されます。
+3. **インメモリ GeoDB ルックアップ (In-Memory Lookup)**:
+   * 抽出された IP アドレスが GeoDB 構造体と照合され、ISO Country Code (例: `CN`, `RU`, `US`, `JP`) および Continent Code (例: `AS`, `EU`, `NA`) のメタデータが属性として付与されます。
+   * **注**: RFC 1918 プライベート IP アドレス（10.0.0.0/8、172.16.0.0/12、192.168.0.0/16）は GeoDB に登録されていないため、`Unknown` または属性なしとして処理されます。
+4. **Security Intelligence (SI) 評価**:
+   * SI で Geolocation リスト/フィードが指定されている場合、DPI (Deep Packet Inspection) 前段階で早期ドロップが実行されます。
+5. **Access Control Policy (ACP) ルール評価**:
+   * ルールリストを上から順に評価（First Match）：
+     * ルールの **`Location` タブ** に設定された国・大陸条件（例: `Source Locations: China`）とパケットの国属性が照合されます。
+6. **アクション執行とイベント生成**:
+   * ルールのアクション（`Allow`, `Block`, `Block with reset`）が即座に執行されます。
+   * FMC へ送出されるイベントログには、該当 IP に対応する国名、ISO コード、および国旗アイコンが紐付けられて記録されます。
 
 ---
 
 ## 🎯 試験対策（CCIE Securityラボ試験）
 
-*   **データベースの更新**: ラボ試験では、インターネット接続がない環境を想定し、FMC に手動で GeoDB ファイルをアップロードして更新させる手順が問われる可能性があります。
-*   **Security Intelligence への組み込み**: ACP ルールよりも上位の SI レベルで特定の国をブロックし、パフォーマンスを最適化する構成が求められます。
-*   **「Unknown」の扱い**: GeoDB に登録されていない、またはプライベート IP アドレスの場合の挙動（Unknown）をどう処理するかが設計上のポイントです。
-*   **例外処理（Whitelist）**: 特定の国をブロックしつつ、その国の中にある特定のビジネスパートナーの IP だけを許可する「例外ルール」の作成スキルが必要です。
-*   **VPN アクセス制限**: AnyConnect（Remote Access VPN）の接続元を特定の国に制限する設定と、ACP でのジオロケーション制御の組み合わせ。
+### ラボ試験における最重要チェックポイント
+
+1. **GeoDB 更新後の「Policy Deploy 不要」の仕様**:
+   * **試験の罠**: FMC で GeoDB パッケージをアップデート（自動または手動）した際、画面上で通常行う「Deploy」操作を実行しなくても、**更新データはバックグラウンドで管理下の全 FTD へ自動配信・適用** されます。
+   * ラボ試験で GeoDB を更新した際、不要な Deploy 操作を実行して時間を浪費しないよう注意が必要です。
+2. **RFC 1918 プライベート IP に対する Geolocation ルール不一致**:
+   * **よくあるミス**: 内部 LAN（例: `10.1.1.0/24`）を送信元として外部宛てのルールを作成する際、`Source Location: Japan` のように指定してしまう構成エラー。
+   * プライベート IP は GeoDB に存在しないためルールにヒットしません。アウトバウンド通信で制御する場合は **`Destination Location`** に目的の国を指定する必要があります。
+3. **大陸 (Continent) チェック時の包括動作**:
+   * Geolocation オブジェクトやルール内で Continent（例: `Asia`）にチェックを入れると、その大陸に属する**すべての国が包含** されます。
+   * 大陸配下の特定国を 1 つでもチェック解除（Uncheck）すると、Continent 自体のチェックは外れますが、それ以外のチェックが入った国々は個別アサイン状態として維持されます。
+4. **エアギャップ（オフライン環境）での GeoDB 手動更新**:
+   * 試験で FMC がインターネット未接続（Air-gapped）の場合、Cisco サポートサイトから事前に取得した signed パッケージ（`.sh.REL.tar` または `.tar`）を `System > Updates > Geolocation Updates` から手動アップロード・インストールする手順が問われます。
+5. **CLI による GeoDB 適用確認とデバッグ**:
+   * FTD CLI で **`show geodb info`** を実行し、現在アクティブな GeoDB バージョンおよび登録エントリ数を確認します。
+   * **`system support firewall-engine-debug`** を使用して、パケット処理時に Snort が正しい国コード（例: `Country: China`）を識別しているかをリアルタイム追跡します。
 
 ---
 
 ## 🛠 設定方法
 
-### 1. ジオロケーションデータベースの更新 (FMC GUI)
-1.  **System > Updates > Geolocation Updates** に移動します。
-2.  **Upload Update** をクリックして最新のバイナリを選択するか、スケジュール更新を設定します。
+### 1. FMC GUI: Geolocation オブジェクトの定義手順
 
-### 2. アクセスコントロールルールでの利用
-1.  **Policies > Access Control** でルールを追加/編集。
-2.  **Geolocation** タブを選択。
-3.  左側のリストから「国（Countries）」または「大陸（Continents）」を選択し、**Source/Destination** に追加して保存・デプロイします。
+```text
+[ Step 1: 再利用可能な Geolocation オブジェクトの作成 ]
+1. FMC UI から Objects > Object Management に移動。
+2. 左側メニューから "Geolocation" を選択し "Add Geolocation" をクリック:
+   - Name: OBJ_GEO_HIGH_RISK_COUNTRIES
+3. カントリーツリーから対象の国を選択:
+   - Asia ➔ [✓] China
+   - Europe ➔ [✓] Russian Federation
+   - (必要に応じて Anonymous Proxy などの特殊カテゴリを選択)
+4. "Save" をクリック。
+```
 
-### 3. Security Intelligence での利用
-1.  **Policies > Access Control** の対象ポリシーの **Security Intelligence** タブを開きます。
-2.  **Networks** セクションで **Geolocation** を選択。
-3.  ブロックしたい国を選択して **Blocklist** に移動します。
+---
+
+### 2. FMC GUI: Access Control Policy への Geolocation 条件ルールの適用
+
+```text
+[ Step 1: ACP ルールの作成と Location 条件のアサイン ]
+1. Policies > Access Control を開き対象の ACP を編集。
+2. "Add Rule" を押下:
+   - Name: BLOCK_HIGH_RISK_INBOUND
+   - Action: Block with reset
+   - Zones タブ: Source = OUTSIDE_ZONE, Destination = DMZ_ZONE
+   - Location タブを選択:
+     - Available Locations リストから "OBJ_GEO_HIGH_RISK_COUNTRIES" (または国を直接指定) を選択。
+     - "Add to Source" を押下して Source Locations 欄へ移動させる。
+3. "Save" をクリック。
+4. 作成したルールを ACP リストの上位（Top）へ配置し、"Deploy" を実行。
+```
+
+---
+
+### 3. FMC GUI: GeoDB の自動更新タスクのスケジュール構成
+
+```text
+[ Step 1: GeoDB 定期自動アップデートの設定 ]
+1. FMC UI の System > Updates に移動。
+2. "Geolocation Updates" タブを選択。
+3. Recurring Geolocation Updates セクション:
+   - [✓] Enable Recurring Weekly Updates from the Support Site にチェック。
+   - Update Start Time: 毎週日曜日 02:00 (トラフィックの少ない時間帯を指定)
+4. "Save" を押下。
+```
+
+---
+
+### 4. FMC REST API: Geolocation オブジェクト情報および GeoDB ステータスの取得
+
+```bash
+# ===== FMC REST API を使用した GeoDB バージョン情報の GET =====
+curl -k -X GET "https://fmc.corp.local/api/fmc_config/v1/domain/e276abec-e0f2-11e3-8169-6d9ed13b206f/object/geolocations" \
+  -H "X-auth-access-token: eyJhbGciOiJSUzI1Ni..." \
+  -H "Content-Type: application/json"
+```
 
 ---
 
 ## 🔍 検証コマンド
 
-| 目的 | コマンド（FTD CLI） |
-| :--- | :--- |
-| **GeoDB のバージョン確認** | <code>show geolocation version</code> |
-| **特定の IP の所属国を確認** | <code>show geolocation ip [IP_ADDRESS]</code> |
-| **Snort での判定デバッグ** | <code>system support firewall-engine-debug</code> (国名マッチングが表示される) |
-| **統計情報の表示** | <code>show statistics security-intelligence</code> |
+| 目的 | コマンド (FTD CLI / FMC CLI) | 表示確認ポイント |
+| :--- | :--- | :--- |
+| **GeoDB の適用バージョン・データベースステータス確認** | <code>show geodb info</code> | アクティブな GeoDB バージョン、ビルド番号、登録国数 |
+| **Snort 3 エンジンでの Geolocation マッチのリアルタイム追跡** | <code>system support firewall-engine-debug</code> | パケットの Src/Dst IP に対する `Geo Location: China` 等の識別ログ |
+| **LINA データプレーンでの Location ルールマッチングの検証** | <code>packet-tracer input OUTSIDE tcp 203.0.113.50 12345 192.168.100.10 80</code> | `Phase: ACCESS-LIST` ➔ `Action: DROP (BLOCK_HIGH_RISK_INBOUND)` の表示 |
+| **FMC 上での GeoDB バージョンの確認 (Web GUI 代替 CLI)** | <code>show version</code> (FMC CLI) | `Geolocation Database Version: ...` の出力行 |
 
 ---
 
 ## 🚨 トラブルシュート
 
-| 症状 | 原因 | 確認・対処方法 |
-| :--- | :--- | :--- |
-| 特定の国をブロックしても通信が通る | GeoDB が古い | <code>show geolocation version</code> で日付を確認。FMC から手動更新を実行。 |
-| 内部通信がドロップされる | Unknown のブロック | プライベート IP が Geolocation ルールにマッチしていないか確認。 |
-| イベントログに国名が出ない | ロギング設定の不備 | ACP ルールの Logging タブで <code>Log at Beginning</code> が有効か確認。 |
-| SI でのブロックが効かない | オブジェクトの未デプロイ | FMC でデプロイステータスを確認。SI オブジェクトが正しく適用されているか再確認。 |
+| 症状 | 原因 | 確認コマンド | 対処方法 |
+| :--- | :--- | :--- | :--- |
+| **Geolocation ルールを設定したが通信が一切ブロックされない** | ルールで送信元に RFC 1918 プライベート IP (例: `10.1.1.50`) が指定されており GeoDB に存在しない | <code>system support firewall-engine-debug</code> | 送信元がパブリック IP となる通信（WAN から DMZ 宛て等）でアサインするか、アウトバウンド制御時は Destination Location を指定する。 |
+| **GeoDB の自動更新タスクがエラーで失敗する** | FMC がインターネットへアクセスできない、DNS 解決失敗、またはプロキシ認証エラー | FMC Message Center / <code>ping cisco.com</code> | `System > Configuration > Management Interfaces` で DNS 設定を確認。エアギャップ環境では手動ファイルアップロードを実施。 |
+| **特定国をブロックしたところ、意図していない周辺国の通信までブロックされた** | Geolocation オブジェクトで Continent（大陸）全体にチェックを入れてしまっている | FMC Objects > Geolocation | 大陸のチェックを外し、ブロック対象とする特定の国のみを個別指定（Check）する。 |
+| **GeoDB 手動アップロード時に「Invalid Package」エラーが発生する** | ソフトウェアバージョンに適合しないパッケージ、または伸張（un-tar）したファイルをアップロードしている | FMC Message Center | ダウンロードした `.sh.REL.tar` ファイルを解凍（解凍不可）せずにそのまま FMC へアップロードする。 |
 
 ---
 
 ## ⚠ 制限事項
 
-*   **正確性の限界**: IP アドレスの所有権移転やモバイルネットワークの特性により、100% 正確な位置特定は不可能です。
-*   **パフォーマンス**: 大量の国を SI でブロックすると、メモリ消費が増加します。
-*   **プライベート IP**: RFC 1918 アドレスは GeoDB には含まれず、通常は特定不能（None/Unknown）となります。
+* **プライベート IP アドレス非対応**:
+  * RFC 1918（10.0.0.0/8、172.16.0.0/12、192.168.0.0/16）などのプライベート IP アドレスは、GeoDB 上で特定国・大陸へ割り当てることができません。
+* **IP アドレス移転時の反映タイムラグ**:
+  * ISP 間の IP アドレスの売買・移転が発生した場合、Cisco Talos が GeoDB パッケージを更新し、FMC へ適用されるまでに若干のタイムラグ（数日〜数週間）が生じることがあります。
+* **プロキシ・VPN 通信の限界**:
+  * クライアントが TOR、アノニマスプロキシ、海外の VPN サーバーを経由して通信を行っている場合、Geolocation 機能は「プロキシの出口 IP アドレスの国」として判定します（アノニマスプロキシ自体の遮断には Security Intelligence フィードを併用します）。
 
 ---
 
 ## 🔄 他技術との関連
 
-*   **Security Intelligence (SI)**: ジオロケーションを「フィード」の一つとして利用し、パケット処理の極めて早い段階でドロップします。
-*   **Reporting**: ダッシュボードやレポートで「攻撃がどの国から来ているか」をグラフ化するために、ジオロケーションデータが利用されます。
-*   **Remote Access VPN**: 接続試行元の IP をチェックし、許可されていない国からの VPN 接続を拒否します。
+* **Security Intelligence (SI)**: IP / Domain / URL リストと Geolocation を組み合わせ、DPI 前段階で早期ドロップを実施。
+* **URL Filtering**: 海外にホストされた悪質 Web サイトに対し、URL カテゴリ制御と Geolocation 判定の二重フィルターを適用。
+* **Unified Events ＆ Context Explorer**: 接続ログや侵入イベントに送信元・宛先国の国旗アイコンおよび ISO コードを動的表示。
 
 ---
 
 ## 🧩 比較表
 
-### Security Intelligence vs Access Control Rule (Geolocation)
+### 1. Geolocation (GeoDB) vs Security Intelligence (SI) IP Blacklist vs Access Control Networks Condition
 
-| 特徴 | Security Intelligence (SI) | Access Control Rule (ACP) |
-| :--- | :--- | :--- |
-| **処理順序** | **極めて早い（プリフィルタ直後）** | SI および SSL 復号の後 |
-| **CPU 負荷** | 低い（メモリ検索のみ） | 中（複雑なルール評価が必要） |
-| **アクション** | Block (Drop) / Monitor | Allow / Block / Trust |
-| **主な用途** | 悪意のある地域の一括排除 | きめ細やかなビジネス要件の制御 |
+| 比較項目 | Geolocation (GeoDB) | Security Intelligence (IP) | Access Control Networks Condition |
+| :--- | :--- | :--- | :--- |
+| **制御識別単位** | **国 (Country) / 大陸 (Continent)** | 個別悪意 IP / CIDR / Feed | 静的 Network Object / Subnet |
+| **更新方式** | GeoDB パッケージによる動的更新 | Talos Feed による 30分毎動的更新 | 管理者による手動設定 |
+| **評価タイミング** | ACP ルール評価時 (または SI 内) | **Snort インスペクション初期 (早期)** | ACP ルール評価時 (順次 Match) |
+| **主な用途** | 地域的セキュリティバウンダリ制御 | 既知の悪意ある IP からの攻撃遮断 | 組織内セグメント間・サブネット間制御 |
 
 ---
 
 ## 💡 ベストプラクティス
 
-1.  **SI で大陸単位のブロック**: 明らかに通信の必要がない大陸（例: 業務外の地域）は、SI レベルで一括遮断し、後続の ACP 処理負荷を軽減します。
-2.  **重要なサーバーには「国内限定」**: 公開サーバーへのアクセスを日本国内の IP のみに制限することで、海外からの無差別スキャンを 90% 以上削減できます。
-3.  **GeoDB 更新の自動化**: 最低でも週に一度は GeoDB を自動更新するようスケジュールを設定します。
-4.  **ホワイトリストの併用**: ジオロケーションブロックを行う際は、必ず重要なパートナーの IP アドレスを SI ホワイトリストに登録し、誤検知を回避します。
+1. **必要な国のみを個別指定 (Specific Country Selection)**:
+   * Continent（大陸）一括指定は、将来追加される国や意図しない地域の通信まで遮断する可能性があるため、明確に脅威対象となっている特定の国（Top Threat Countries）を個別にアサインします。
+2. **週次自動更新タスク (Weekly Auto-Update Task) の構成**:
+   * Cisco Talos が提供する最新の IP ↔ 国対応データを維持するため、毎週ネットワーク使用率の低い時間帯（例: 日曜深夜 02:00）に GeoDB の自動更新タスクを有効化しておきます。
+3. **Inbound Block Rule の最上位配置**:
+   * ACP ルールリストにおいて、特定国からの不要なインバウンドパケットを早期に Drop / Reset させるため、Geolocation Block ルールをリストの上位（Top）に配置します。
 
 ---
 
 ## 📝 ラボ学習・設定サンプル例
 
-### 1. 特定国（例: 北朝鮮）からの全通信遮断
-*   **要件**: 北朝鮮（North Korea）からの全てのインバウンド通信を SI で遮断せよ。
-*   **設定**: ACP > Security Intelligence > Networks > Geolocation > North Korea を Blocklist へ。
+### 例1: Geolocation オブジェクト `OBJ_GEO_BLOCK_COUNTRIES` の定義
 
-### 2. 特定の宛先国へのデータ転送制限
-*   **要件**: 内部ネットワークから特定の国（例: 競合国）への FTP 通信を遮断せよ。
-*   **設定**: ACP ルールを作成。Source: Any, Destination Geolocation: [Country], Service: FTP, Action: Block.
+#### 問題
+FMC 上で、`China` および `Russian Federation` を含む再利用可能な Geolocation オブジェクト `OBJ_GEO_BLOCK_COUNTRIES` を作成せよ。
 
-### 3. 国内限定 Web 公開
-*   **要件**: DMZ の Web サーバー（10.1.1.100）への HTTPS アクセスを、日本（Japan）からの通信のみ許可し、他を拒否せよ。
-*   **設定**: ルール 1: Destination IP: 10.1.1.100, Source Geo: Japan, Action: Allow。ルール 2: Destination IP: 10.1.1.100, Action: Block。
+#### 要件
+* オブジェクト管理画面から構成すること。
 
-### 4. ジオロケーションデータベースの手動アップデート
-*   **要件**: インターネット接続のない FMC で、提供された `Cisco_Geolocation_Update-XXX.pkg` を使用して DB を更新せよ。
-*   **操作**: System > Updates > Geolocation Updates > Browse & Upload.
+#### 設定・操作手順
 
-### 5. Geo ログのカスタムアラート
-*   **要件**: ロシア（Russia）からの通信を検知した際に、即座に SNMP トラップを送信せよ。
-*   **設定**: Geolocation を条件にした Monitor ルールを作成し、Logging タブで SNMP Alert を紐付け。
+```text
+1. FMC UI で Objects > Object Management > Geolocation を選択。
+2. "Add Geolocation" をクリック:
+   - Name: OBJ_GEO_BLOCK_COUNTRIES
+3. カントリーツリーから以下にチェックを入れる:
+   - Asia ➔ [✓] China
+   - Europe ➔ [✓] Russian Federation
+4. "Save" をクリック。
+```
 
-### 6. VPN 接続のジオフィルタリング
-*   **要件**: RA VPN ユーザーが海外旅行中に接続できないよう、日本国内からの接続のみを許可せよ。
-*   **設定**: Outside インターフェイスに適用される ACP SI で日本以外を Block。
+#### 検証方法
+* FMC オブジェクト一覧に `OBJ_GEO_BLOCK_COUNTRIES` が追加され、2 カ国が含まれていることを確認。
 
-### 7. GeoDB による特定 IP の調査
-*   **課題**: IP `8.8.8.8` が GeoDB 上でどの国に判定されるか、FTD CLI で確認せよ。
-*   **実行**: `show geolocation ip 8.8.8.8`
+---
 
-### 8. ジオロケーションと URL フィルタリングの組み合わせ
-*   **要件**: 特定の国からのアクセスかつ「SNS カテゴリ」への通信をブロックせよ。
-*   **設定**: ACP ルールで Geolocation と Category タブの両方を指定。
+### 例2: GeoDB 定期自動更新タスクの設定
 
-### 9. 未知の IP（Unknown）の統計取得
-*   **要件**: GeoDB で判定できない「Unknown」の通信量をモニターせよ。
-*   **設定**: Geolocation タブで「Unknown」を選択した Monitor ルールを作成。
+#### 問題
+FMC において、毎週日曜日午前 3 時 (03:00) に Cisco Support Site から最新の GeoDB を自動ダウンロード・インストールする定期タスクを有効化せよ。
 
-### 10. クラスタ環境での Geo 同期確認
-*   **要件**: FTD クラスタの全ユニットで GeoDB バージョンが一致しているか確認せよ。
-*   **コマンド**: `show geolocation version` を各ユニットで実行。
+#### 要件
+* Geolocation Updates 画面で設定すること。
+
+#### 設定・操作手順
+
+```text
+1. System > Updates > Geolocation Updates タブを開く。
+2. Recurring Geolocation Updates セクション:
+   - [✓] Enable Recurring Weekly Updates... にチェック。
+   - Update Start Time: Sunday 03:00
+3. "Save" をクリック。
+```
+
+#### 検証方法
+* 設定画面で `Enable Recurring Weekly Updates` がオンとして保存されていることを確認。
+
+---
+
+### 例3: 特定国からの DMZ 宛てインバウンド通信の遮断
+
+#### 問題
+Geolocation オブジェクト `OBJ_GEO_BLOCK_COUNTRIES` を使用し、対象国から内部 DMZ Web サーバー (`192.168.100.10`) 宛ての着信通信を FTD 上で拒否せよ。
+
+#### 要件
+* ACP ルールのアクション: `Block with reset`
+
+#### 設定・操作手順
+
+```text
+1. Policies > Access Control で対象 ACP を編集。
+2. "Add Rule" をクリック:
+   - Name: BLOCK_GEO_INBOUND
+   - Action: Block with reset
+   - Source Zones: OUTSIDE_ZONE
+   - Destination Networks: 192.168.100.10
+   - Location タブ: Available Locations から "OBJ_GEO_BLOCK_COUNTRIES" を追加 (Add to Source)。
+3. Save をクリックし、ルールを上位に配置して Deploy。
+```
+
+#### 検証方法
+* FTD CLI で `packet-tracer input OUTSIDE tcp 203.0.113.50 50000 192.168.100.10 80` を実行し、`BLOCK_GEO_INBOUND` ルールで Block されることを確認。
+
+---
+
+### 例4: 社内 LAN から特定地域宛てのアウトバウンド通信遮断
+
+#### 問題
+社内 LAN (`10.1.1.0/24`) から `Anonymous Proxy` カテゴリ宛てのアウトバウンド通信を検知・遮断せよ。
+
+#### 要件
+* Location 条件で Destination に指定すること。
+
+#### 設定・操作手順
+
+```text
+1. ACP ルールを作成:
+   - Name: BLOCK_ANONYMOUS_PROXIES
+   - Action: Block
+   - Source Zones: INSIDE_ZONE
+   - Location タブ: Available Locations から "Anonymous Proxy" を選択し "Add to Destination" を押下。
+2. Save して Deploy。
+```
+
+#### 検証方法
+* FMC の Connection Events 画面で、該当ルールによって遮断された接続の Destination Country / Proxy 種別を確認。
+
+---
+
+### 例5: Geolocation と AVC (アプリケーション制御) の組み合わせルール
+
+#### 問題
+`China` に属する IP アドレスからの通信に対して、すべてのアプリケーションをブロックするのではなく、`SSH` および `Telnet` 通信のみをピンポイントでブロックせよ。
+
+#### 要件
+* Location 条件と Applications タブ条件を併用すること。
+
+#### 設定・操作手順
+
+```text
+1. ACP ルールを作成:
+   - Name: BLOCK_CHINA_MANAGEMENT_PROTOS
+   - Action: Block with reset
+   - Location タブ: Source Locations = China
+   - Applications タブ: "SSH", "TELNET" を追加。
+2. Save して Deploy。
+```
+
+#### 検証方法
+* FTD CLI の `system support firewall-engine-debug` を有効化し、該当国からの SSH 通信が発生した際にルールに正常にマッチして Reset されることを検証。
+
+---
+
+### 例6: オフライン環境 (Air-gapped) での GeoDB 手動アップデート
+
+#### 問題
+インターネット接続を持たない FMC に対して、手動ダウンロードした GeoDB パッケージ (`Cisco_GEODB_Update-2026-08-01-001.sh.REL.tar`) を適用せよ。
+
+#### 要件
+* FMC GUI からアップロード・インストールすること。
+
+#### 設定・操作手順
+
+```text
+1. System > Updates > Geolocation Updates タブを開く。
+2. One-Time Geolocation Update セクション:
+   - "Upload and install geolocation update" ラジオボタンを選択。
+   - "Choose File" を押し、ローカルの GeoDB パッケージを選択。
+3. "Import" をクリック。
+```
+
+#### 検証方法
+* インストール完了後、`Help > About` 画面で Geolocation Database Version がアップロードしたビルド番号に更新されたことを確認（Deploy は実行不要）。
+
+---
+
+### 例7: FTD CLI を用いた GeoDB バージョンおよびビルドの確認
+
+#### 問題
+FTD CLI にログインし、現在アプライアンスにロードされている GeoDB のバージョン情報をコマンドラインから確認せよ。
+
+#### 要件
+* `show geodb info` コマンドを使用すること。
+
+#### 設定・操作手順
+
+```bash
+> show geodb info
+```
+
+#### 検証方法
+* CLI 出力において、`GeoDB Version` および `Total IP Ranges Loaded` の情報が表示されることを確認。
+
+---
+
+### 例8: Security Intelligence での Geolocation オブジェクト適用
+
+#### 問題
+Access Control Policy の Security Intelligence タブにおいて、Geolocation オブジェクト `OBJ_GEO_HIGH_RISK` を Blacklist にアサインし、DPI 前段階で早期ドロップさせよ。
+
+#### 要件
+* Security Intelligence 設定を使用すること。
+
+#### 設定・操作手順
+
+```text
+1. Policies > Access Control で ACP を編集。
+2. "Security Intelligence" タブを選択。
+3. Network List / Feeds セクションにおいて、"OBJ_GEO_HIGH_RISK" を Blacklist 欄へドラッグ＆ドロップ。
+4. Save して Deploy。
+```
+
+#### 検証方法
+* 対象国からの通信が Snort の詳細ルールの評価を待たずに SI フェーズで早期ドロップされることを確認。
+
+---
+
+### 例9: FMC REST API による Geolocation オブジェクトの読み出し
+
+#### 問題
+FMC REST API を使用して、定義されている全 Geolocation オブジェクトの UUID および構成国リストを Curl コマンドで取得せよ。
+
+#### 要件
+* `/api/fmc_config/v1/domain/{domainUUID}/object/geolocations` エンドポイントを使用すること。
+
+#### 設定・操作手順
+
+```bash
+# ===== Auth Token 取得後、Geolocation オブジェクト情報を GET =====
+curl -k -X GET "https://fmc.corp.local/api/fmc_config/v1/domain/e276abec-e0f2-11e3-8169-6d9ed13b206f/object/geolocations" \
+  -H "X-auth-access-token: eyJhbGciOiJSUzI1Ni..." \
+  -H "Content-Type: application/json"
+```
+
+#### 検証方法
+* 返却された JSON レスポンス内に、設定した Geolocation オブジェクトの名称および包含されている国コードが含まれることを確認。
+
+---
+
+### 例10: FMC Unified Events での Geolocation ログフィルタリング
+
+#### 問題
+FMC の Unified Events 画面において、`Source Country: Russian Federation` に合致する過去 24 時間のイベントログのみを抽出・分析せよ。
+
+#### 要件
+* Analysis > Unified Events 画面を使用すること。
+
+#### 設定・操作手順
+
+```text
+1. FMC UI で Analysis > Unified Events を開く。
+2. 検索フィルターバーに `SrcCountry: "Russian Federation"` を入力して Enter。
+```
+
+#### 検証方法
+* イベントテーブル上にロシア連邦の国旗アイコン 🇷🇺 と対象ログのみがフィルタ表示されることを確認。
 
 ---
 
 ## ❓ 想定試験問題
 
-1.  **実装**: FMC において、日本以外の全ての国からの SSH アクセスを、アクセスコントロールルールの評価前に効率的にブロックする構成を完了しなさい。
-2.  **トラブルシュート**: 特定の国をブロックするルールを作成したが、その国に属するはずの新しい IP アドレスからの通信が通過してしまう。確認すべき FMC の設定箇所は？
-    *   **回答**: System > Updates > Geolocation Updates で、GeoDB が最新の状態に更新されているか確認する。
-3.  **Design**: ジオロケーションフィルタリングにおいて、社内ネットワーク（10.0.0.0/8）が「Unknown」と判定され、ブロックルールに巻き込まれるのを防ぐための最適な方法は？
-    *   **回答**: 内部ネットワークオブジェクトを Security Intelligence のホワイトリスト（Whitelist）に登録する。
-4.  **コンフィグ読解**: `show geolocation ip 1.1.1.1` の出力が `Country: Australia` と表示された。この情報を ACP ルールで利用するために、FMC 上でどのタブを設定すべきか？
-    *   **回答**: Access Control Rule の「Geolocation」タブ。
-5.  **実装**: インバウンド攻撃を国別で可視化するために、FMC ダッシュボードで「攻撃元国別トップ 10」を表示するウィジェットを追加する手順を述べよ。
+### 1. コンフィグ読解問題
+
+**問題**: 管理者が FMC 上で Geolocation オブジェクトを作成し、`Europe` 大陸を選択して保存した。その後、特定の国（例: `France`）のみをリストから単独でチェック解除（Uncheck）した。この操作を行った際のオブジェクトの挙動として正しいものはどれか。
+
+* A) オブジェクト自体が自動削除される。
+* B) 大陸（Europe）全体のチェックは自動的に外れるが、France 以外のヨーロッパ各国に対する個別チェック状態は自動的に保持される。
+* C) Europe 全体のチェックが入ったままとなり、France の除外は無視される。
+* D) FTD アプライアンスが強制再起動する。
+
+**正解**: **B**  
+**解説**: Geolocation オブジェクトにおいて大陸 (Continent) を選択すると傘下の全国家が選択状態となりますが、その中の 1 つの国をチェック解除すると、大陸自体のチェックボックスは外れ、代わりにそれ以外の国々に個別チェックが入った状態に自動更新されます。
+
+---
+
+### 2. トラブルシュート問題
+
+**問題**: 社内クライアント (`10.1.1.50`) から外部インターネットへの Web 通信を制御するため、ACP ルールで `Source Location: Japan` を指定して `Allow` ルールを作成した。しかし、クライアントからのアクセスは本ルールに一切マッチせず、後続のデフォルトブロックルールにヒットして切断されてしまった。原因として適切なものはどれか。
+
+* A) FTD の GeoDB が最新バージョンに更新されていないため。
+* B) クライアントの IP アドレス (`10.1.1.50`) が RFC 1918 プライベート IP であり、GeoDB に存在しないため。
+* C) FMC 上で GeoDB 更新後の Deploy を実行していないため。
+* D) FTD の Firewall Mode が Transparent Mode に設定されているため。
+
+**正解**: **B**  
+**解説**: **RFC 1918 プライベート IP アドレス**（10.0.0.0/8 等）は GeoDB に登録されておらず、どの国にもマッピングされません。社内クライアントからのアウトバウンド通信を Geolocation で制御する場合は、`Destination Location` に目的地のパブリック IP の国を指定する必要があります。
+
+---
+
+### 3. Design 問題
+
+**問題**: 新規に導入する FTD において、Cisco Talos が提供する最新の地理位置情報を常に維持しつつ、更新作業に伴う通信の遮断や管理者の保守運用負荷を極力排除したい。適切な構成手法はどれか。
+
+* A) 毎週末に FMC 上で GeoDB を手動アップデートし、全 FTD へ Deploy を実行する。
+* B) FMC 上で GeoDB の週次自動更新タスク (`Recurring Weekly Updates`) を構成し、更新後の Deploy 操作は行わない（自動同期されるため）。
+* C) FTD CLI 上で `cron` タスクを作成して GeoDB を更新する。
+* D) Prefilter Policy で全ポートを Fastpath に設定する。
+
+**正解**: **B**  
+**解説**: **GeoDB の更新は FMC から FTD へメモリ上更新データとして自動同期されるため、Policy Deploy は不要** です。FMC 上で weekly の自動更新タスクを有効化しておくだけで、無停止で最新の GeoDB を維持できます。
+
+---
+
+### 4. 実装問題
+
+**問題**: FTD CLI にログインし、現在アプライアンスの Snort エンジンにロードされている GeoDB のバージョン番号およびデータベースの正常性を確認するための正確なコマンドはどれか。
+
+* A) <code>show version</code>
+* B) <code>show geodb info</code>
+* C) <code>show access-list</code>
+* D) <code>show service-policy</code>
+
+**正解**: **B**  
+**解説**: FTD CLI で **`show geodb info`** を実行すると、アプライアンス上で現在アクティブな GeoDB のバージョン、ビルド番号、ロードされている IP レンジ数などの詳細情報を一括確認できます。
+
+---
+
+### 5. コンフィグ読解問題
+
+**問題**: 管理者が FMC 上で GeoDB の手動アップデート（Cisco Support Site からの直接ダウンロード）を実行し、正常完了のメッセージが表示された。管理者は続けて managed FTD に対する Deploy ボタンを押そうとしたが、Deploy キューには変更通知が表示されていなかった。この挙動の理由として正しいものはどれか。
+
+* A) FMC ↔ FTD 間の sftunnel が切断されているため。
+* B) GeoDB の更新は FMC から FTD への自動データ同期メカニズムによって処理されるため、Access Control Policy の Deploy キューを生成しない正常な動作である。
+* C) GeoDB パッケージの暗号化署名検証に失敗したため。
+* D) FTD 上で Threat License が無効化されているため。
+
+**正解**: **B**  
+**解説**: **GeoDB のアップデートはポリシーコンフィグの変更として扱われない** ため、Deploy キュー（Deployment Page）に保留中の変更として表示されません。GeoDB ファイルは FTD へ直接同期・ロードされます。
 
 ---
 
 ## 🔗 参考リソース
 
-*   **Configuration Guide**:
-    *   [Cisco Secure Firewall Management Center Administration Guide, 7.1 - Geolocation](https://www.cisco.com/c/en/us/td/docs/security/firepower/710/configuration/guide/fpmc-config-guide-v71/objects.html#id_92425)
-*   **Technical Notes**:
-    *   [Verify and Troubleshoot Geolocation Database Updates on Firepower](https://www.cisco.com/c/en/us/support/docs/security/firepower-management-center/215354-configure-syslog-on-firepower-firewall-m.html)
-*   **Cisco Live (Slides)**:
-    *   [BRKSEC-2021: Firepower Threat Defense - Packet Flow and Troubleshooting](https://www.ciscolive.com/on-demand/on-demand-library.html?search=BRKSEC-2021) (SI と Geo の順序について)
+* [Cisco Secure Firewall Management Center Device Configuration Guide - Geolocation Objects and Rules](https://www.cisco.com/)
+* [Cisco Technical Notes: Update and Troubleshoot Geolocation Database (GeoDB) on FMC](https://www.cisco.com/)
+* [Cisco Live: Deep Dive into Cisco Secure Firewall Policy Architecture (BRKSEC-3021)](https://www.ciscolive.com/)
 
 ---
 
-## 📝 **補足（Notes）**  
+## 📝 **補足（Notes）**
 
-*   **学習メモ**: ジオロケーションは設定自体は非常に簡単（GUI で国を選ぶだけ）ですが、**「SI（Security Intelligence）」と「ACP ルール」のどちらでやるべきか**という設計上の判断が CCIE ラボでは問われます。
-*   **図解**: 常に「パケットが入ってきて、まず SI（Geo）で弾かれ、生き残ったものが ACP ルール（Geo）に行く」という、より早い段階での遮断を意識してください。
-*   **注意点**: ラボ試験中に GeoDB 更新を実行すると、配布に数分かかることがあります。その間、他のタスクを進めるなどの時間管理が重要です。
+* **学習メモ**:
+  * CCIE Security ラボ試験で「Block incoming traffic from high-risk countries without requiring manual deployment after database updates」と要求された場合は、以下の通り構成します：
+    1. `Objects > Object Management > Geolocation` で対象国をまとめたオブジェクトを作成。
+    2. ACP にて `Source Location` に作成したオブジェクトを指定した `Block` ルールを追加して Deploy。
+    3. `System > Updates > Geolocation Updates` で定期更新を有効化（GeoDB 更新自体は Deploy 不要であることを理解しておく）。
+* **図解（GeoDB 判定と評価パイプライン）**:
+  ```text
+  [ Ingress Packet ] (Src IP: 203.0.113.10)
+            │
+            ▼
+  [ Extract Src IP ] ──► [ Lookup in GeoDB Memory ] ──► Identified: "China (CN)"
+            │
+            ▼
+  [ Security Intelligence ]
+            ├── Match Geo Blacklist? ──► YES ──► [ Early Drop ]
+            └── NO
+                  │
+                  ▼
+  [ Access Control Policy Rules ]
+            ├── Match Rule "BLOCK_GEO" (Location = China)? ──► YES ──► [ Block / Reset ]
+            └── Match Rule "ALLOW_OTHER" ──────────────────► [ Allow & Inspect ]
+  ```
+* **注意点**:
+  * ラボ試験で Geolocation ルールを作成した後は、`packet-tracer` や CLI デバッグコマンド (`system support firewall-engine-debug`) を活用して、疑似パケットのパブリック IP に対する国識別およびルールマッチが意図通り行われていることを必ず確認してください。
+
+---
+
+ご不明な点や追加の解説が必要な場合は、お気軽にお知らせください。復習や実機演習の際にお役立ていただければ幸いです！
