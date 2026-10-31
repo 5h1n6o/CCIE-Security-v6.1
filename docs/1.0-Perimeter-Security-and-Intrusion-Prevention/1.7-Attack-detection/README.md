@@ -665,6 +665,3 @@ control-plane
   * ラボ試験で DAI や IPSG を設定した後は、`show ip dhcp snooping binding` および `show ip verify source` / `show ip arp inspection` を実行し、バインド DB が正しく作成され、検証ドロップカウンターが意図通り動作していることを必ず検証してください。
 
 ---
-
-💡 **次ステップのご提案**:
-次回の Blueprint 項目（例: 2.0 シリーズや他のセキュリティ防御機能等）についての学習メモ作成も引き続き対応可能です。ご希望の項目がございましたらお知らせください！
