@@ -766,7 +766,7 @@ ASA 側で投入すべき正しい設定はどれか。
 
 ---
 
-## 📝 **补足（Notes）**
+## 📝 **補足（Notes）**
 
 * **学習メモ**:
   * CCIE Security ラボ試験で Routing Protocol Security が出題された場合の構成選択フローチャート：
