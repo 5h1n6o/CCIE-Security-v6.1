@@ -5,134 +5,132 @@ nav_order: 4
 parent: 2.0-Secure-Connectivity-and-Segmentation
 ---
 
-# 2.4.a Cisco ASA VPN clustering
+# 2.4 VPN high availability methods
 
-Cisco セキュリティアプライアンス（Cisco ASA 5500-X シリーズ、ISA 3000、Firepower 4100/9300 シリーズ上の ASA / FTD）における **ASA VPN Clustering（VPN クラスタリング）** は、複数台の ASA / FTD アプライアンスを 1 つの論理ファイアウォール（Single Logical Unit）として透過的に統合し、Site-to-Site IPsec VPN および AnyConnect Remote Access VPN (RA-VPN) セッションのスループレット線形拡張（Scale-out）と N+1 高可用性（High Availability / Resiliency）を同時に実現するエンタープライズ統合アーキテクチャです。
+Cisco ネットワークおよびセキュリティインフラストラクチャにおける **VPN High Availability（VPN 高可用性・冗長化）** 技術は、Site-to-Site VPN（IPsec L2L、DMVPN、FlexVPN）および Remote Access VPN（AnyConnect / Cisco Secure Client）において、回線障害、アプライアンス障害、あるいは拠点障害が発生した場合でも通信を停止させず、無中断または最小限の切り替え時間でセッションを維持・復旧させるための包括的アーキテクチャ設計群です。
 
-CCIE Security v6.1 Blueprint **2.4.a Cisco ASA VPN clustering** では、**Spanned EtherChannel Mode** および **Individual Interface Mode** における VPN トラフィック処理、**Control Node (Master)** と **Data Node (Slave)** の選定と役割分担、**Cluster Control Link (CCL)** 上での VPN ステート同期・ダイレクト転送、**Centralized VPN Features**（IPsec S2S / Remote Access VPN 終端における制御プレーンとデータプレーンの振る舞い）、**ASA VPN Load Balancing Cluster**（IPsec/SSL VPN 固有のディスパッチャ・リダイレクト技術）とのアーキテクチャ上の差異、および高度な障害復旧・トラブルシューティング能力が深く問われます。
+CCIE Security v6.1 Blueprint **2.4 VPN high availability methods** では、**Cisco ASA**、**Cisco FTD (Firepower Threat Defense / Secure Firewall)**、および **Cisco IOS / IOS-XE ルーター** における多様な高可用性メカニズムの深い理解と、要求仕様に応じた最適な冗長化デザインの実装・検証・トラブルシューティング能力が厳格に評価されます。
 
 ---
 
 ## 📘 概要
 
 * **機能概要**:
-  * **ASA Clustering (システムレベルのクラスタリング)**:
-    * 最大 16 台（プラットフォーム依存）の ASA / FTD アプライアンス群を 1 つの IP アドレス・仮想アプライアンスとして統合。
-    * **Spanned EtherChannel モード**（L2/L3）または **Individual Interface モード**（L3 のみ）で動作し、全ノードでアクティブにトラフィックを分散・処理する。
-    * VPN 機能においては、**Centralized Features（中央集権型機能）** として Control Node (Master) が IKEv1/IKEv2 ネゴシエーションや Dynamic Tunnel 割り当てを統括し、データプレーンまたはセッション情報を Data Node へ動的配信する。
-  * **ASA VPN Load Balancing Cluster (VPN 固有のロードバランシングクラスタ)**:
-    * 複数台の ASA（独立した個別のファイアウォール）を **Virtual Cluster IP (VIP)** の下にグループ化（VPN Cluster Group）し、Incoming AnyConnect / IPsec クライアント接続要求を受信した Master (Virtual Master) が、最も負荷の低い Slave ASA の物理 IP アドレスへ HTTP 302 リダイレクトまたは IKEv2 Redirect 応答を返して接続を分散する分散負荷制御技術。
+  * **Remote Access VPN 高可用性**:
+    * **ASA / FTD Active/Standby Stateful Failover**: 2台のアプライアンス間で Stateful Link を介して AnyConnect セッション情報（IKE/IPsec SA、SSL SA、IP アドレス割り当て、認証ステート）をリアルタイム同期し、一次機障害時にクライアントの再接続なしで無中断切替を実現する。
+    * **ASA AnyConnect VPN Load Balancing Cluster**: 複数台（最大 10 台等）の ASA を仮想クラスタ（Virtual Cluster IP）としてまとめ、マスターアプライアンスが最も負荷の低いスレーブへ IKEv2 / SSL リダイレクトを行うことで、負荷分散と障害時自動再接続を両立する。
+  * **Site-to-Site VPN 高可用性**:
+    * **Multiple Crypto Peers (IPsec Peer Redundancy)**: Crypto Map 内に複数のピア IP アドレス (`set peer IP1 IP2`) を優先順に定義し、DPD (Dead Peer Detection) や ISAKMP/IKEv2 キープアライブにより一次ピアの障害を検知した際、自動的にセカンダリピアへ SA 再確立を試みる。
+    * **IP SLA ＆ Floating Static Route Failover**: IP SLA オブジェクトで対向ピアの到達性をモニタリングし、トラッキング状態に応じてルーティングテーブルのディスタンス値（Floating Static Route）を動的に切り替えてバックアップトンネルを起動する。
+    * **HSRP ＋ RRI ＋ IPsec Stateful / Stateless HA**: HSRP の Virtual IP (VIP) を Tunnel Endpoint として共有し、Reverse Route Injection (RRI) で上流ルーターへの戻りルートを動的追従させる。SSO (Stateful Switchover) 統合環境では SCTP プロトコル経由で SA ステートを動的同期する。
+  * **マルチハブ VPN 高可用性 (DMVPN / FlexVPN)**:
+    * **DMVPN Dual-Hub (Single Cloud vs Dual Cloud)**:
+      * **Single Cloud (DHSD / MHSD)**: 単一の mGRE サブネット（Overlay）内に複数の Hub を NHS (Next Hop Server) として配置。シンプルだがルーティングの優先制御に制約がある。
+      * **Dual Cloud (DHDD)**: 独立した 2 つの mGRE サブネット（Cloud 1 & Cloud 2）を構築し、Spoke に 2 つの Tunnel インターフェイスを配置。EIGRP/OSPF/BGP のメトリック（Delay、Cost）を用いてプライマリ/セカンダリの完全制御が可能。
+    * **FlexVPN High Availability (Dual-Hub FlexVPN ＆ FlexVPN Load Balancer)**:
+      * **Backup Peers ＆ Backup Group**: Client 側の FlexVPN Profile に複数の Peer を優先順でバインドし、IP SLA Track や `backup-group` によりアクティブ接続の維持とフォールバックを自動制御。
+      * **FlexVPN Load Balancer**: IKEv2 Redirect (RFC 5685) と HSRP VIP を統合し、Master ルーターが IKE_SA_INIT / IKE_AUTH 時にクライアントを最も負荷の低い Cluster Slave へ直接リダイレクトする。
 * **利用目的**:
-  * 数万人規模の Remote Access AnyConnect ユーザーおよび多数の拠点 Site-to-Site IPsec トンネルを単一のエンドポイント（FQDN / IP）で収容し、単一アプライアンスの暗号化処理能力（Crypto Engine / Throughput）の限界を破る。
-  * クラスタ内の 1 台のアプライアンスがハードウェア障害や回線障害を起こした場合でも、残りのノードがアクティブに VPN セッションを引き継ぎ、サービス停止時間をゼロまたは極小化する。
+  * ネットワーク機器の故障、SFP/リンクダウン、ISP 回線障害時における VPN 通信途絶の防止。
+  * 大規模 RAVPN 環境における暗号化処理負荷の平坦化と処理能力の水平拡張 (Scale-out)。
+  * メイン拠点（HQ / DC）の完全二重化による災害対策 (DR: Disaster Recovery) 対応。
 * **どのような場面で利用するか**:
-  * 大規模エンタープライズのグローバル RAVPN 集約ヘッドエンド。
-  * ミッションクリティカルな Data Center 相互接続（DCI）における大容量 Site-to-Site IPsec VPN 終端。
+  * 企業の本社・データセンター境界での AnyConnect RAVPN 収容基盤。
+  * 全国の拠点（Branch）と 2 箇所のデータセンター間を接続する DMVPN / FlexVPN バックボーン。
+  * 異種キャリア（MPLS ＋ インターネット）を利用したマルチホーミング Site-to-Site VPN。
+
+---
 
 ## 🔑 要点
 
-| 項目 | ASA Clustering (System Cluster) | ASA VPN Load Balancing Cluster |
-| :--- | :--- | :--- |
-| **アーキテクチャ** | 複数台の ASA を **1台の論理 ASA** に統合 (Single IP/MAC) | **独立した複数台の ASA** をグループ化 (VIP 共有) |
-| **インターフェイス構成** | Spanned EtherChannel Mode / Individual Interface Mode | 各 ASA が独立したインターフェイス・IP アドレスを保持 |
-| **専用相互接続線** | **Cluster Control Link (CCL)** が必須 (MTU 9184 推奨) | 不要 (LAN / UDP 902 ポートでクラスタキープアライブ交換) |
-| **VPN セッション処理** | **Centralized / Distributed**: Control Node が制御、Data Node 処理 | **Fully Distributed**: 各 ASA が独立して TLS/DTLS/IPsec を完全終端 |
-| **対応 VPN プロトコル** | Site-to-Site IPsec (VTI/Crypto Map), AnyConnect Remote Access | AnyConnect SSL/TLS/DTLS, Clientless SSL VPN, IKEv2 RA |
-| **リダイレクト方式** | LACP ハッシュ / ECMP / CCL リダイレクト処理 | HTTP 302 Redirect, IKEv2 Redirect (RFC 5685) |
-| **ノード障害時挙動** | ノード脱落時、他ノードがセッション・IP を即時引継ぎ | 障害ノードのユーザーは切断、VIP 経由で別ノードへ自動再接続 |
-| **最大構成台数** | 最大 16 台 (Firepower 4100/9300, ASA 5585-X 等) | 最大 10 台 |
-| **ライセンス要件** | ASA Cluster License (各ノードに必要) | Base License 内包 (追加ライセンス不要) |
-
+| 冗長化テクノロジー | 対象モデル / OS | セッション切替時間 | ステートフル同期 | スループレット拡張 | 特徴 / 主な用途 |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **ASA Active/Standby Stateful Failover** | ASA / FTD (HA) | 1秒未満 | **あり** (State Link 同期) | なし | IPsec / SSL RAVPN の完全無中断フェールオーバー |
+| **ASA VPN Load Balancing Cluster** | ASA (Single Mode) | 数秒 (再接続) | なし | **あり** (最大10台) | AnyConnect セッションの自動負荷分散と集約 |
+| **Multiple Crypto Peers (`set peer`)** | ASA / FTD / IOS | DPD タイマー依存 (10-30秒) | なし | なし | 定番の Site-to-Site バックアップピア設定 |
+| **IP SLA Track ＋ Floating Static Route** | ASA / FTD / IOS | IP SLA タイマー依存 | なし | なし | 回線障害検知に基づく静的ルート切替 |
+| **HSRP ＋ RRI ＋ IPsec HA (IOS)** | IOS / IOS-XE Router | HSRP ＋ SA 再確立 | なし (SSO時あり) | なし | 共通 VIP を対向に提示するヘッドエンド冗長化 |
+| **DMVPN Dual-Hub Single-Cloud** | IOS / IOS-XE Router | IGP コンバージェンス時間 | なし | あり (アクティブ分散) | 単一 Overlay 構成のマルチハブ冗長 |
+| **DMVPN Dual-Hub Dual-Cloud** | IOS / IOS-XE Router | IGP コンバージェンス時間 | なし | あり (ポリシー分離) | 完全分離 Overlay による確実なトラフィック制御 |
+| **FlexVPN Backup Peers / Backup Group** | IOS / IOS-XE Router | DPD / SLA タイマー依存 | なし | なし | IKEv2 IKE_SA_INIT レベルでのバックアップ切替 |
+| **FlexVPN Load Balancer (RFC 5685)** | IOS / IOS-XE Router | 数秒 (リダイレクト) | なし | **あり** (HSRP VIP) | IKEv2 Redirect を用いたヘッドエンドクラスタリング |
 
 ---
 
 ## 🏗 動作原理
 
-### 1. ASA Clustering における Centralized VPN フロー (Control Node ＆ Data Node)
+### 1. ASA AnyConnect VPN Load Balancing Cluster の動作フロー
 
-ASA System Clustering において、VPN 制御（Site-to-Site IPsec / AnyConnect）は **Centralized Feature（中央集権型機能）** として管理されます。外部からのトンネル確立ネゴシエーション（IKEv1/IKEv2 / SSL TLS）は、常に **Control Node (Master)** が主導して制御します。
+AnyConnect クライアントが仮想クラスタ IP (Virtual Cluster IP) に接続し、Master から Least-Loaded Slave へリダイレクトされるアーキテクチャ：
 
 ```text
-[ AnyConnect Client / Remote IPsec Peer ]
-                   │
-                   ├─── (1) Initial VPN Connection Request (TLS SYN / IKE_SA_INIT)
-                   │
-                   ▼
-┌──────────────────────────────────────────────────────────────────────────────────┐
-│ Switch Infrastructure (Spanned EtherChannel / cLACP)                             │
-└──────────────────────────────────────────────────────────────────────────────────┘
-                   │
-                   ├─── Hash routes packet to Data Node B ─────────────────────────┐
-                                                                                   │
-┌──────────────────────────────────────────────────────────────────────────────────┼┐
-│ ASA Cluster                                                                      ││
-│                                                                                  ││
-│  [ Data Node B (Slave) ] ◄───────────────────────────────────────────────────────┘│
-│     ├── Centralized VPN Traffic Inspection                                        │
-│     └── Encapsulates & Redirects Packet via CCL ───┐                              │
-│                                                    │                              │
-│ ┌──────────────────────────────────────────────────┼────────────────────────────┐ │
-│ │ Cluster Control Link (CCL - MTU 9184 Jumbo Frame)│                            │ │
-│ └──────────────────────────────────────────────────┼────────────────────────────┐ │
-│                                                    │                              │
-│  [ Control Node A (Master) ] ◄─────────────────────┘                              │
-│     ├── Executes IKE / TLS Handshake & Authentication                             │
-│     ├── Allocates Inner IP Address (Local Pool / RADIUS)                          │
-│     └── Replicates IPsec/TLS SA Keys & Session State to Data Nodes via CCL        │
-└──────────────────────────────────────────────────────────────────────────────────┘
+[ AnyConnect Client ] ───(1) Initial SSL/IKEv2 Connection ───► [ Virtual Cluster IP: 203.0.113.100 ]
+                                                                        │
+                                                                        ▼
+                                                         [ ASA-1 (Cluster Master) ]
+                                                            ├── Checks CPU/RAM & Session Load
+                                                            └── Identifies ASA-2 as Least-Loaded Node
+                                                                        │
+[ AnyConnect Client ] ◄──(2) HTTP 302 / IKEv2 Redirect (ASA-2 IP) ──────┘
+       │
+       └───(3) Establishment of VPN Tunnel ───────────────────────────► [ ASA-2 (Cluster Slave: 203.0.113.102) ]
+                                                                             └── Assigned IP, Encrypted Data Flow
 ```
 
 ---
 
-### 2. ASA VPN Load Balancing Cluster (Redirect Flow) 動作原理
-
-独立した複数台の ASA で構成される VPN Load Balancing Cluster において、Virtual Cluster IP (VIP) を使用してクライアントを最少負荷のノードへ振る流し構造：
+### 2. FlexVPN Load Balancer (HSRP VIP ＋ RFC 5685 IKEv2 Redirect) 動作フロー
 
 ```text
-[ AnyConnect Client ] ───(1) HTTPS GET / IKE_SA_INIT to VIP (192.168.1.100) ───► [ Master ASA (Virtual VIP Owner) ]
-                                                                                   │
-                                                                                   ├── Evaluates Load Status of All Members
-                                                                                   └── Selects Lowest-Load Slave ASA 2
-                                                                                   │
-[ AnyConnect Client ] ◄──(2) HTTP 302 Redirect / IKEv2 Redirect (to 192.168.1.102) ┘
+[ FlexVPN Client ] ───(1) IKE_SA_INIT (REDIRECT_SUPPORTED) ───► [ HSRP VIP: 192.168.10.1 (Master) ]
+                                                                        │
+                                                                        ├── Queries Cluster Member Loads
+                                                                        └── Selects Router 3 (10.10.10.3)
+                                                                        │
+[ FlexVPN Client ] ◄──(2) IKE_SA_INIT Reply (NOTIFY: REDIRECT 10.10.10.3) ┘
        │
-       └───(3) Direct TLS/DTLS / IKEv2 Connection ───────────────────────────────► [ Slave ASA 2 (192.168.1.102) ]
-                                                                                   └── Terminates Tunnel & Forwards Traffic
+       └───(3) New IKE_SA_INIT / IKE_AUTH ────────────────────────────► [ FlexVPN Server 3 (10.10.10.3) ]
+                                                                             └── Virtual-Access Tunnel Created
+```
+
+---
+
+### 3. DMVPN Dual-Hub Dual-Cloud (DHDD) vs Single-Cloud (DHSD) 構成フロー
+
+```text
+[ Dual-Hub Dual-Cloud (DHDD) Topology ]
+                          ┌─── [ Hub 1 (172.16.1.1) ] ─── (DMVPN Cloud 1: 172.16.1.0/24)
+  [ Spoke Router ] ───────┤
+                          └─── [ Hub 2 (172.16.2.1) ] ─── (DMVPN Cloud 2: 172.16.2.0/24)
+
+  * Spoke has Tunnel0 (Cloud 1, EIGRP Delay 1000) and Tunnel1 (Cloud 2, EIGRP Delay 2000).
+  * Independent NHRP Mapping & Routing metrics allow precise active/backup path selection.
+
+[ Dual-Hub Single-Cloud (DHSD) Topology ]
+  [ Spoke Router ] ─────── (Tunnel0: 172.16.1.0/24) ──────┬─── [ Hub 1 (172.16.1.1) - Primary NHS ]
+                                                          └─── [ Hub 2 (172.16.1.2) - Secondary NHS ]
+
+  * Single mGRE subnet. Both Hubs share the same IP network.
 ```
 
 ---
 
 ## ⚙ 動作シーケンス
 
-### 1. ASA System Clustering での VPN セッション処理シーケンス
-
-1. **クラスタブート ＆ Control Node 選定**:
-   * ASA クラスタグループが起動し、`priority` 数値が最も小さいアプライアンスが **Control Node (Master)** として選出される。
-   * Control Node は VPN 仮想インターフェイスおよび Cluster Virtual IP の制御権限をアサートする。
-2. **インバウンド VPN 接続要求の受信 ＆ CCL 転送**:
-   * AnyConnect クライアントまたは対向 IPsec ピアからのトンネル確立パケット（TCP 443 / UDP 500 / UDP 4500）が着信。
-   * スイッチの LACP ハッシュによって Data Node (Slave) に着信した場合、Data Node はセントラライズドプロトコル（VPN）であることを認識し、パケットを **Cluster Control Link (CCL)** を経由して Control Node へリダイレクトする。
-3. **Control Node によるトンネル処理 ＆ セッションレプリケーション**:
-   * Control Node が IKE 認証、SAML 2.0 / RADIUS 認証、AnyConnect グループポリシー適用、および IP アドレス割り当てを完了させる。
-   * トンネル確立後、Control Node は暗号化キー（IPsec SA / TLS Session Key）および接続状態情報を CCL 経由で全 Data Node（または指定された Director Node）へ一括同期（Replicate）する。
-4. **データプレーンのフォワーディング処理**:
-   * トンネル確立後の暗号化データパケット（ESP / DTLS）は、Data Node 上で直接復号処理され、内部ネットワークへ転送される。
-
----
-
-### 2. ASA VPN Load Balancing Cluster の処理シーケンス
-
-1. **クラスタ状態ハートビート交換**:
-   * クラスタ内の全 ASA（Master および Slave）は、UDP 902 ポート（デフォルト）を使用して LAN 上でハートビートメッセージおよび現在のアクティブ接続数・CPU 使用率データを定期交換する。
-2. **仮想マスター (Virtual Master) による初回受信 ＆ 振分判定**:
-   * クライアントは Cluster VIP (`192.168.1.100`) 宛てに接続。VIP を保持する Virtual Master がリクエストを受信。
-   * Virtual Master は自機を含む全メンバーの負荷状態を比較し、最も負荷の低いノード（例: Slave 2 `192.168.1.102`）を選択。
-3. **リダイレクト応答の送信**:
-   * **SSL / HTTPS の場合**: Master は `HTTP/1.1 302 Redirect` レスポンスを送信 (`Location: https://...`)。
-   * **IKEv2 の場合**: Master は `IKE_SA_INIT` 応答内で `N(REDIRECT_SUPPORTED)` 通知ヘッダーを解釈し、`IKEv2 Redirect` 応答メッセージを送信。
-4. **クライアントの物理ノード直接接続**:
-   * AnyConnect クライアントは切断を受け入れ、指定された Slave 2 の物理 IP アドレス (`192.168.1.102`) へ直接再接続を実施し、トンネルを完全終端する。
-
+1. **ASA Active/Standby Stateful VPN Failover シーケンス**:
+   * **アクティブ機（ASA-1）での SA 確立**: クライアント（または対向 Peer）との間で IKE SA および IPsec SA（あるいは SSL VPN セッション）が生成される。
+   * **Stateful Link 経由の同期**: ASA-1 は生成された SA 鍵情報、SPI、Sequence Number、IP Pool アロケーション情報を Stateful Link 経由で Standby 機（ASA-2）へ即座にレプリケーション。
+   * **障害発生 ＆ フェールオーバー判定**: ASA-1 のリンクダウンまたは Keepalive 喪失が発生。
+   * **無中断切替**: ASA-2 が Active へ昇格。共通の Virtual IP / MAC アドレスを Gratuitous ARP で通知。クライアントは再ハンドシェイクなしで暗号化通信を継続。
+2. **ASA VPN Load Balancing Cluster シーケンス**:
+   * **Heartbeat ＆ 負荷状態共有**: クラスタに参加する ASA（Master 1台、Slave 複数台）は、UDP 5555（UDP 内部通信）を用いて全ノードの現在のセッション数、CPU/メモリロード情報を 1 秒周期で共有。
+   * **Initial Connection 到着**: クライアントが DNS で解決した Virtual Cluster IP（Master ノードが応答）へアクセス。
+   * **Redirect 応答**: Master ノードは送信元クライアントに対し、最小負荷の Slave ノードの Public IP アドレスを書き込んだリダイレクト応答（HTTP 302 または IKEv2 Notify）を送信。
+   * **Direct SA 確立**: クライアントは指定された Slave ノードの IP アドレスへ直接接続し、VPN セッションを確立。
+3. **Multiple Crypto Peers (IPsec Backup Peer) シーケンス**:
+   * **Primary Peer への接続確立**: Initiator は `set peer IP1 IP2` の順序に従い、IP1 宛てに IKE_SA_INIT を送信。正常であれば IP1 との間で Phase 1/Phase 2 SA を確立。
+   * **DPD (Dead Peer Detection) 監視**: 両端で DPD (`crypto isakmp keepalive` または `crypto ikev2 dpd`) を有効化。通信途絶時に R-U-THERE メッセージを送受信。
+   * **DPD Timeout ＆ Active Peer 変更**: DPD 応答が途絶した場合、Initiator はローカルの SA を削除し、Crypto Map の次順ピア（IP2）宛てに新たな IKE ネゴシエーションを開始。
 
 ---
 
@@ -140,118 +138,218 @@ ASA System Clustering において、VPN 制御（Site-to-Site IPsec / AnyConnec
 
 ### ラボ試験における最重要チェックポイント
 
-1. **SAML 2.0 認証を伴う VPN Load Balancing での FQDN リダイレクト (`vpn load-balancing send-fqdn`)**:
-   * **試験の罠**: ASA VPN Load Balancing Cluster 環境で SAML 2.0 (Azure AD / Duo 等) シングルサインオンを導入する場合、デフォルト（IP アドレスでのリダイレクト）ではクライアントが Redirect された際、URL が IP アドレス表記に変化し、IdP（Identity Provider）側の Redirect URI 検証および SSL 証明書エラーで認証が破綻します。
-   * **必須対策**: `vpn load-balancing` モード配下で **`send-fqdn`** コマンドを投入し、Redirect 応答メッセージ内に IP ではなく FQDN（例: `asa1-vpn.corp.local`）を含めさせることが強く要求されます。
-2. **Cluster Control Link (CCL) の MTU サイズ設定 (9184 Bytes)**:
-   * **必須要件**: ASA System Clustering 上で VPN データがノード間転送される際、元の IPsec / DTLS パケットにクラスタヘッダーがカプセル化（オーバーヘッド約 100 バイト）されて CCL を通過します。
-   * CCL インターフェイスの MTU は **`9184`** バイト（Jumbo Frame）に指定し、スイッチ側の物理ポートも `system mtu jumbo 9000` 等でジャンボフレームを許可する必要があります。MTU が 1500 のままだと、大容量 VPN パケットが CCL 上で断片化・ドロップし、AnyConnect トンネルが著しく低速化または切断されます。
-3. **ASA VPN Load Balancing の UDP 902 通信許可 ＆ グループ共有キー**:
-   * **キープアライブポート**: クラスタノード間は UDP 902 ポートで制御メッセージ（負荷情報）を定期送信します。ノード間にファイアウォールが存在する場合は UDP 902 を許可しなければなりません。
-   * **Shared Secret**: 全ノードで `shared-secret <KEY>` を完全に同一に揃える必要があります。
-4. **AnyConnect IP Local Pool ＆ Subnet の注意点**:
-   * System Clustering 環境では、IP アドレスプール（`ip local pool`）は Control Node で一元定義されます。クラスタ全体の同時接続ユーザー数に対応できる十分な CIDR ブロック（例: `/20` や `/21`）をあらかじめ確保する必要があります。
+1. **ASA VPN Load Balancing Cluster の要件 ＆ 設定手順**:
+   * **クラスタ設定プロファイル**: `vpn load-balancing` モードに入り、`cluster ip address <VIP>`、`priority <NUM>`、`redirect-fqdn`、`cluster port <PORT>` を定義。
+   * **Cluster Encryption Key**: 全ノードで `cluster encryption key <KEY>` を一致させる。
+   * **Group URL の組み合わせ要件**: AnyConnect グループ URL を使用する場合、**Virtual Cluster IP 用の Group URL** と **各ノード独自の Public IP 用の Group URL** の両方を Connection Profile にアサインする必要がある（片方だけだとリダイレクト後に 404 エラーとなる）。
+2. **ASA Stateful VPN Failover ＆ HTTP レプリケーションの注意点**:
+   * **Stateful Link の独立**: `failover link STATE_LINK <IF>` でデータポートとは別、または LAN Failover と共用のインターフェイスを指定。
+   * **HTTP Connection Replication**: デフォルトでは HTTP セッションはレプリケーション対象外。要件で「Ensure HTTP connections remain active during failover」と指示された場合、**`failover replication http`** の投入が必須。
+3. **Router HSRP ＋ RRI ＋ IPsec Stateful HA (SSO / SCTP) の設定要件**:
+   * **HSRP 側の準備**: `standby 1 ip <VIP>`、`standby 1 name VPNHA`、`standby 1 track <IF>`。
+   * **Crypto Map への HSRP 紐付け**: **`crypto map <NAME> <SEQ> ipsec-isakmp`** の下で **`set peer <REMOTE_IP>`** ＋ **`reverse-route`** ＋ **`redundancy VPNHA`** を設定。
+   * **SCTP / IPC による Stateful Switchover**: `crypto ha` 構成により、IKE / IPsec SA を HSRP Active 機から Standby 機へ同期させ、無中断切り替えを実現する。
+4. **DMVPN Dual-Hub (Single Cloud vs Dual Cloud) の選定とルーティング制御**:
+   * **Single Cloud (DHSD)**: Spoke は 1 つの `interface Tunnel0` のみ設定。NHRP 設定で `ip nhrp nhs <HUB1_TUNNEL_IP>` と `ip nhrp nhs <HUB2_TUNNEL_IP>` を並列定義。EIGRP などのハブ側 `no ip split-horizon` に注意。
+   * **Dual Cloud (DHDD)**: Spoke に `Tunnel0` (Cloud 1 -> Hub1) と `Tunnel1` (Cloud 2 -> Hub2) を作成。`Tunnel0` のメトリック（`delay 1000`）を `Tunnel1`（`delay 2000`）より優先させ、確実な Primary / Backup アクティブ・スタンバイ制御を構成。
+5. **FlexVPN Backup Peers ＆ Backup Group 構成**:
+   * **Backup Peers**: FlexVPN Client Profile 内で `match parent backhaul` ＋ `peer 1 <IP1> pref 1`, `peer 2 <IP2> pref 2` を定義。
+   * **Backup Group**: `backup group <1-255>` を設定し、他 Client Profile が既に同じ Server に接続している場合に重複接続を回避するグループ制御。
+6. **FlexVPN Load Balancer (RFC 5685 IKEv2 Redirect)**:
+   * **HSRP 統合**: HSRP Active ルーターが Master として VIP を所有し、クライアントから到着した IKE_SA_INIT を `crypto ikev2 cluster` 設定に基づき Least-Loaded Slave ルーターへリダイレクト。
 
 ---
 
 ## 🛠 設定方法
 
-### 1. ASA System Clustering (Spanned EtherChannel Mode) 設定
+### 1. ASA CLI: AnyConnect VPN Load Balancing Cluster 完全設定
 
 ```bash
-! ===== Step 1: Cluster Control Link (CCL) ＆ MTU 設定 =====
-interface Port-channel48
- description Cluster Control Link
- port-channel min-links 1
- member-interface GigabitEthernet0/2
- member-interface GigabitEthernet0/3
+! ===== ASA-1 (Cluster Master) Configuration =====
+vpn load-balancing
+ priority 10                            ! 数値が高いほど Master 優先度が高い
+ cluster ip address 203.0.113.100       ! Virtual Cluster IP
+ cluster port 5555
+ cluster interface-group outside
+ cluster encryption key cisco123
+ redirect-fqdn vpn.example.com
+ participate-in-load-balancing
+ enable
 
-mtu cluster 9184                        ! CCL の MTU を 9184 (Jumbo) に拡張
+! Connection Profile / Group URL 設定 (Virtual IP & Native IP 両対応)
+webvpn
+ enable outside
 
-! ===== Step 2: Spanned Data EtherChannel 設定 =====
-interface Port-channel1
- port-channel span-cluster
- nameif outside
- security-level 0
- ip address 192.168.10.100 255.255.255.0
- member-interface GigabitEthernet0/0
- member-interface GigabitEthernet0/1
+tunnel-group TG_EMPLOYEES type remote-access
+tunnel-group TG_EMPLOYEES general-attributes
+ address-pool POOL_RA_VPN
+ default-group-policy GP_EMPLOYEES
+tunnel-group TG_EMPLOYEES webvpn-attributes
+ group-url https://vpn.example.com/employees enable
 
-! ===== Step 3: Cluster Group 有効化 (Master ASA-1) =====
-cluster group VPN_CLUSTER
- local-unit ASA-1
- cluster-interface Port-channel48 ip 10.255.255.1 255.255.255.0
- priority 1                             ! 最少数値が Control Node 優先
- key cisco123
+! ===== ASA-2 (Cluster Slave) Configuration =====
+vpn load-balancing
+ priority 5
+ cluster ip address 203.0.113.100
+ cluster port 5555
+ cluster interface-group outside
+ cluster encryption key cisco123
+ redirect-fqdn vpn.example.com
+ participate-in-load-balancing
  enable
 ```
 
 ---
 
-### 2. ASA VPN Load Balancing Cluster 設定 (SAML / AnyConnect 対応)
+### 2. Router CLI: Multiple Crypto Map Peers ＋ DPD ＋ RRI 設定
 
 ```bash
-! ===== Master ASA (ASA-1) Configuration =====
-ip local pool VPN_POOL 10.100.1.1-10.100.1.254 mask 255.255.255.0
+! ===== Branch Router Site-to-Site High Availability =====
+crypto isakmp policy 10
+ encr aes 256
+ hash sha256
+ authentication pre-share
+ group 14
 
-vpn load-balancing
- cluster ip address 192.168.10.200       ! Virtual Cluster IP (VIP)
- priority 10                            ! 割り当て優先度
- public-ip 192.168.10.101               ! ASA-1 自身の物理 Outside IP
- fqdn asa1-vpn.corp.local               ! 自身の物理 FQDN
- send-fqdn                              ! SAML / Cert 認証破綻防止の FQDN リダイレクト
- shared-secret ClusterKey123
- master-encryption
- participate-in-load-distribution
+crypto isakmp key PrimaryKey123 address 198.51.100.1
+crypto isakmp key SecondaryKey123 address 198.51.100.2
+crypto isakmp keepalive 10 3 periodic   ! DPD 有効化 (10秒間隔, 3回再試行)
 
-! ===== Slave ASA (ASA-2) Configuration =====
-vpn load-balancing
- cluster ip address 192.168.10.200       ! 同一の Virtual Cluster IP
- priority 5
- public-ip 192.168.10.102               ! ASA-2 自身の物理 Outside IP
- fqdn asa2-vpn.corp.local
- send-fqdn
- shared-secret ClusterKey123
- participate-in-load-distribution
+crypto ipsec transform-set TSET_AES_SHA esp-aes 256 esp-sha256-hmac
+ mode tunnel
+
+crypto map CMAP_TO_HQ 10 ipsec-isakmp
+ set peer 198.51.100.1 198.51.100.2    ! 198.51.100.1 (Primary), 198.51.100.2 (Backup)
+ set transform-set TSET_AES_SHA
+ match address ACL_VPN_TRAFFIC
+ reverse-route                         ! Dynamic RRI 有効化
+
+interface GigabitEthernet0/0
+ ip address 203.0.113.10 255.255.255.0
+ crypto map CMAP_TO_HQ
 ```
 
 ---
 
-### 3. ASA Clustering 上での AnyConnect RA-VPN トンネルグループ設定
+### 3. Router CLI: HSRP ＋ RRI ＋ IPsec Stateful HA (SSO / SCTP) 設定
 
 ```bash
-! ===== Tunnel Group ＆ Group Policy 定義 =====
-group-policy GP_CORPORATE internal
-group-policy GP_CORPORATE attributes
- vpn-tunnel-protocol ssl-client ikev2
- default-domain corp.local
- split-tunnel-policy tunnelall
+! ===== HQ Primary Gateway Router (R1) =====
+crypto ha
+ ike VIP 172.16.100.1
+ ipsec VIP 172.16.100.1
 
-tunnel-group TG_ANYCONNECT type remote-access
-tunnel-group TG_ANYCONNECT general-attributes
- address-pool VPN_POOL
- default-group-policy GP_CORPORATE
-tunnel-group TG_ANYCONNECT webvpn-attributes
- group-alias Corporate_VPN enable
+interface GigabitEthernet0/0
+ description OUTSIDE_INTERFACE
+ ip address 172.16.100.2 255.255.255.0
+ standby 1 ip 172.16.100.1              ! HSRP Virtual IP
+ standby 1 priority 110
+ standby 1 preempt
+ standby 1 name VPN_HA_GROUP
+ standby 1 track GigabitEthernet0/1
+ crypto map CMAP_HQ redundancy VPN_HA_GROUP
 
-webvpn
- enable outside
- anyconnect image disk0:/anyconnect-win-4.10.05095-webdeploy-k9.pkg 1
- anyconnect enable
+crypto map CMAP_HQ 10 ipsec-isakmp
+ set peer 203.0.113.10
+ set transform-set TSET_AES_SHA
+ match address ACL_VPN_TRAFFIC
+ reverse-route
+
+! ===== HQ Standby Gateway Router (R2) =====
+crypto ha
+ ike VIP 172.16.100.1
+ ipsec VIP 172.16.100.1
+
+interface GigabitEthernet0/0
+ ip address 172.16.100.3 255.255.255.0
+ standby 1 ip 172.16.100.1
+ standby 1 priority 100
+ standby 1 preempt
+ standby 1 name VPN_HA_GROUP
+ crypto map CMAP_HQ redundancy VPN_HA_GROUP
+```
+
+---
+
+### 4. Router CLI: DMVPN Dual-Hub Dual-Cloud (DHDD) Phase 3 設定
+
+```bash
+! ===== Spoke Router Configuration (Dual Cloud DHDD) =====
+! ----- Cloud 1 (Hub 1 接続用) -----
+interface Tunnel0
+ ip address 172.16.1.10 255.255.255.0
+ ip mtu 1400
+ ip tcp adjust-mss 1360
+ ip nhrp authentication DMVPN_KEY1
+ ip nhrp network-id 100
+ ip nhrp holdtime 300
+ ip nhrp nhs 172.16.1.1 nbma 198.51.100.1  ! Hub 1 NHS/NBMA
+ ip nhrp shortcut
+ tunnel source GigabitEthernet0/0
+ tunnel mode gre multipoint
+ tunnel key 100
+ tunnel protection ipsec profile IPSEC_PROF_DMVPN
+ delay 1000                            ! Primary Cloud (低メトリック)
+
+! ----- Cloud 2 (Hub 2 接続用) -----
+interface Tunnel1
+ ip address 172.16.2.10 255.255.255.0
+ ip mtu 1400
+ ip tcp adjust-mss 1360
+ ip nhrp authentication DMVPN_KEY2
+ ip nhrp network-id 200
+ ip nhrp holdtime 300
+ ip nhrp nhs 172.16.2.1 nbma 198.51.100.2  ! Hub 2 NHS/NBMA
+ ip nhrp shortcut
+ tunnel source GigabitEthernet0/0
+ tunnel mode gre multipoint
+ tunnel key 200
+ tunnel protection ipsec profile IPSEC_PROF_DMVPN
+ delay 2000                            ! Backup Cloud (高メトリック)
+```
+
+---
+
+### 5. Router CLI: FlexVPN Load Balancer (RFC 5685 IKEv2 Redirect ＋ HSRP) 設定
+
+```bash
+! ===== FlexVPN Master Server Configuration =====
+crypto ikev2 cluster
+ standby-group Group1
+ master
+ max-session 1000
+ re-redirect-val 10
+ no shutdown
+
+interface GigabitEthernet0/0
+ ip address 192.168.10.2 255.255.255.0
+ standby 1 ip 192.168.10.1              ! HSRP VIP (Cluster Endpoint)
+ standby 1 name Group1
+ standby 1 priority 110
+ standby 1 preempt
+
+crypto ikev2 profile PROF_FLEX_SERVER
+ match identity remote any
+ authentication local pre-share key Cisco123
+ authentication remote pre-share key Cisco123
+ aaa authorization group psk list default default
+ virtual-template 1
 ```
 
 ---
 
 ## 🔍 検証コマンド
 
-| 目的 | コマンド (ASA / FTD CLI) | 表示確認ポイント |
+| 目的 | コマンド (ASA / IOS / FTD CLI) | 表示確認ポイント |
 | :--- | :--- | :--- |
-| **System Cluster ノード選定・状態確認** | <code>show cluster info</code> | `This is "node-1" in state MASTER`, `Data Node` の一覧 |
-| **Cluster Health ＆ CCL MTU ステータス確認** | <code>show cluster info health</code> | `Unit Health: PASSED`, `Interface Health: PASSED`, `CCL MTU: 9184` |
-| **VPN Load Balancing Cluster の動作状態確認** | <code>show vpn load-balancing</code> | `Role: Master/Slave`, `Cluster IP`, `Participating: Yes`, メンバー一覧と負荷度 |
-| **VPN クラスタ全体のセッションDB一括表示** | <code>show vpn-sessiondb cluster</code> / <code>cluster exec show vpn-sessiondb anyconnect</code> | 各ノードでアクティブに収容されている AnyConnect ユーザーセッション一覧 |
-| **VPN Load Balancing デバッグログ追跡** | <code>debug vpn load-balancing code</code><br><code>debug vpn load-balancing cluster</code> | リダイレクト判定、UDP 902 パケット交換、VIP アナウンスのログ |
-
+| **ASA RAVPN Cluster 状態 ＆ メンバー確認** | <code>show vpn-sessiondb cluster</code> | Master/Slave 状態、接続クライアント数、Public/Private IP |
+| **ASA Active/Standby Stateful 状態確認** | <code>show failover</code> / <code>show failover state</code> | Stateful Link 状態、SA 同期オブジェクト統計 |
+| **IPsec SA / Peer 状態確認** | <code>show crypto ipsec sa</code> / <code>show crypto session</code> | `current_peer`, Encaps/Decaps パケット数, DPD 状態 |
+| **IKEv2 / FlexVPN SA ＆ Redirect 状態確認** | <code>show crypto ikev2 sa detailed</code> | `IKEv2 Redirect Supported`, Redirect 先 IP |
+| **FlexVPN Cluster (Load Balancer) 状態確認** | <code>show crypto ikev2 cluster</code> | Master/Slave ロール、メンバー負荷率、リダイレクト数 |
+| **IPsec Stateful HA (Crypto HA) 同期状態** | <code>show crypto ha</code> | IKE VIP / IPsec VIP 状態、SA 同期スタンプ |
+| **DMVPN NHRP ピア ＆ NHS トラッキング確認** | <code>show ip nhrp</code> / <code>show ip nhrp nhs</code> | NHS ピア（Hub）の状態 (`UP`), Priority, Cluster |
+| **IP SLA トラッキングステータス確認** | <code>show track</code> / <code>show ip sla summary</code> | Track オブジェクト状態 (`UP` / `DOWN`), RTT |
 
 ---
 
@@ -259,361 +357,383 @@ webvpn
 
 | 症状 | 原因 | 確認コマンド | 対処方法 |
 | :--- | :--- | :--- | :--- |
-| **VPN Load Balancing でクライアントが特定の Master ノードにしか接続されず、負荷分散されない** | クラスタノード間の UDP 902 ポートが遮断されている、または `shared-secret` キーが不一致 | <code>show vpn load-balancing</code><br><code>debug vpn load-balancing cluster</code> | ノード間で UDP 902 ポートの疎通を確保し、全 ASA で `shared-secret` 設定を完全に一致させる。 |
-| **SAML 2.0 認証と VPN Load Balancing を併用時、Redirect 後に SSL 証明書警告または IdP 拒否エラーが発生** | デフォルトのリダイレクト動作で物理 IP アドレスが指定され、IdP の Redirect URI 条件と不一致を起こしている | <code>show vpn load-balancing</code> | `vpn load-balancing` モード配下で **`send-fqdn`** コマンドを有効化し、FQDN でリダイレクトさせる。 |
-| **System Clustering 上で AnyConnect 通信の遅延・パケットドロップが激しい** | Cluster Control Link (CCL) の **MTU サイズが 1500** のままで、カプセル化パケットが断片化・ドロップしている | <code>show cluster info health</code><br><code>show interface Port-channel48</code> | `mtu cluster 9184` コマンドを投入し、スイッチ側ポートも Jumbo Frame (9000 以上) を許可する。 |
-| **Master ノードダウン時、AnyConnect セッションが一斉に切断される** | SSL/TLS セッションキーの即時同期が行われず、クライアント側 Auto-Reconnect タイマーが失効した | <code>show vpn-sessiondb anyconnect</code> | AnyConnect プロファイルで **`Auto Reconnect`** を有効化し、再接続間隔を最適化する。 |
+| **ASA AnyConnect VPN Cluster でリダイレクト後にクライアントが接続エラーになる** | Connection Profile の Group URL に Master VIP 用 URL はあるが、**Slave 独自の Public IP/FQDN 用 Group URL が未設定** | <code>show vpn-sessiondb cluster</code><br><code>show running-config tunnel-group</code> | 全 Cluster Member の固有 Public IP / FQDN に対する Group URL を Connection Profile に追加定義する。 |
+| **ASA Active/Standby Failover 切り替え時に AnyConnect RAVPN セッションが切断され再認証を要求される** | Stateful Failover の **`failover link` が未有効**、またはライセンス/モード不一致 | <code>show failover</code> | `failover link` の設定および `failover interface ip` の正常性を確認する。 |
+| **Multiple Crypto Peers (`set peer IP1 IP2`) で Primary 障害時に切替が極めて遅い (数分かかる)** | **DPD (Dead Peer Detection) が未設定**のまま、デフォルトの ISAKMP/IPsec タイムアウトを待機している | <code>show crypto isakmp keepalive</code><br><code>show crypto ikev2 sa detailed</code> | `crypto isakmp keepalive 10 3 periodic` または IKEv2 DPD を有効化し、短時間で障害検知させる。 |
+| **Multiple Crypto Peers で Primary 回線が復旧しても Backup Peer から Primary に切り替わらない** | IPsec Crypto Map の仕様上、**確立済みの Active SA は期限切れ (Lifetime) または DPD 破棄まで維持**される | <code>show crypto ipsec sa</code> | 正常な動作仕様。即時復旧が必要な場合は IP SLA ＋ Dynamic Routing / VTI の構成を検討する。 |
+| **Router HSRP ＋ RRI ＋ IPsec HA で切替後に戻りトラフィックが対向ルーターに届かない** | **Reverse Route Injection (RRI)** が未設定のため、上流ルーターのルーティングテーブルに VIP 宛てのルートが動的生成されていない | <code>show ip route</code><br><code>show crypto map</code> | Crypto Map 内で `reverse-route` を有効化し、上流の IGP (EIGRP/OSPF) で再配布する。 |
+| **DMVPN Dual-Hub で Spoke から Hub2 へのトンネルが Up にならない** | Spoke の `Tunnel1` で **`ip nhrp network-id` や `tunnel key` が Hub2 と不一致** | <code>show ip nhrp</code><br><code>show crypto session</code> | NHRP Network ID、Tunnel Key、および IPsec Profile 設定を Hub2 と一致させる。 |
 
 ---
 
 ## ⚠ 制限事項
 
-* **FTD Clustering における Remote Access VPN (AnyConnect) 非対応**:
-  * Cisco FTD (Firepower Threat Defense) クラスタ環境では、Site-to-Site VPN のみがサポートされ、**AnyConnect RA-VPN は完全非対応** です（※RA-VPN 負荷分散には ASA VPN Load Balancing Cluster または AnyConnect TND/FQDN DNS 振分けを利用）。
-* **ASA VPN Load Balancing Cluster の構成上限**:
-  * VPN Load Balancing Cluster グループに所属できる ASA ノード数は **最大 10 台** に制限されます。
-* **SSL/TLS トンネル暗号化キーの非動的同期**:
-  * SSL/TLS トンネルは本質的に状態フルなプロトコルであり、アプライアンス障害発生時は AnyConnect クライアントが別ノードへ自動再接続（Auto-Reconnect）を試行して新トンネルを再確立します。
+* **ASA Multi-Context Mode における制限**:
+  * ASA Multi-Context モードでは、**VPN Load Balancing Cluster および Remote Access VPN 機能全般（AnyConnect / Clientless SSL）がサポートされません**。RAVPN 高可用性には Single Context モードでの Active/Standby Failover または VPN Load Balancing Cluster を採用する必要があります。
+* **FTD Clustering における Remote Access VPN 非対応**:
+  * FTD Cluster（Multi-node Cluster）では Remote Access VPN は一切サポートされません（Site-to-Site VPN のみ Control Node 上で Centralized 機能として動作）。
+* **Multiple Crypto Map Peers の非プリエンプション（Non-Preemptive）動作**:
+  * Crypto Map で `set peer IP1 IP2` を設定した場合、IP1 障害時に IP2 へ切替わりますが、IP1 が復旧しても既存セッションは自動的に IP1 へ戻りません（SA の Lifetime 満了またはクリア時まで IP2 を維持）。
 
 ---
 
 ## 🔄 他技術との関連
 
-* **SAML 2.0 / RADIUS 認証**: AnyConnect ユーザーの認証・認可。VPN Load Balancing 時は FQDN リダイレクト (`send-fqdn`) が必須。
-* **Cisco ISE (Identity Services Engine)**: RADIUS CoA、SGT (Security Group Tag)、および DACL 動的割り当て。
-* **Spanned EtherChannel / cLACP**: System Clustering において複数ノードを 1 つの Port-Channel に束ねるデータ面技術。
+* **Dynamic Routing Protocols (EIGRP, OSPF, BGP)**: DMVPN / FlexVPN バックボーン上でマルチハブ間の最適な経路選定とアクティブ・バックアップ動的切替を制御。
+* **HSRP / VRRP (First Hop Redundancy Protocol)**: ルーター上の IPsec VIP エンドポイントおよび FlexVPN Load Balancer の Virtual Master 宛てロードバランス基盤を提供。
+* **IP SLA ＆ Track**: 外線 ICMP / TCP ポートプローブによる回線状態を常時モニタリングし、Static Route や FlexVPN Profile のソースを動的判定。
+* **Reverse Route Injection (RRI)**: IPsec SA の確立状態と連動して動的にスタティックルートを生成し、上流ルーターへ戻りトラフィックの正しい Next-hop を開示。
 
 ---
 
 ## 🧩 比較表
 
-### ASA System Clustering vs ASA VPN Load Balancing Cluster vs ASA Failover (A/S ＆ A/A)
+### 1. DMVPN Dual-Hub Single Cloud (DHSD) vs Dual-Hub Dual Cloud (DHDD)
 
-| 比較項目 | ASA System Clustering | ASA VPN Load Balancing Cluster | ASA Active/Standby Failover | ASA Active/Active Failover |
-| :--- | :--- | :--- | :--- | :--- |
-| **最大ノード数** | **最大 16 台** | **最大 10 台** | 2 台 | 2 台 |
-| **IP / MAC 表現** | 単一の論理 IP / MAC | 個別の物理 IP ＋ 共有 VIP | 共有 Virtual IP / Active-Standby MAC | Context 別の共有 IP / MAC |
-| **スループレット** | **N台分の線形拡張 (Scale-out)**| **N台分の線形拡張 (Scale-out)**| 1台分 (Standby は待機) | 最大 2台分 (分散時) |
-| **専用相互接続** | **CCL (MTU 9184)** | 不要 (LAN / UDP 902) | Failover LAN ＋ Stateful Link | Failover LAN ＋ Stateful Link |
-| **AnyConnect RA-VPN**| 対応 (Centralized 制御) | **最適 (HTTP/IKEv2 Redirect)**| 対応 (Stateful Failover) | 非対応 (RA-VPN は A/A 不可) |
+| 比較項目 | DMVPN Single Cloud (DHSD) | DMVPN Dual Cloud (DHDD) |
+| :--- | :--- | :--- |
+| **mGRE サブネット数** | **単一サブネット** (例: `172.16.1.0/24`) | **2つの独立サブネット** (例: `172.16.1.0/24`, `172.16.2.0/24`) |
+| **Spoke 側 Tunnel 数** | 1つの `interface Tunnel0` | **2つの Tunnel インターフェイス** (`Tunnel0`, `Tunnel1`) |
+| **トラフィック制御** | ルーティングプロトコルのメトリック制御に制約 | **インターフェイス単位の Delay / Cost で完全制御** |
+| **設定の容易性** | 設定がシンプルで展開が容易 | 設定箇所が増えるが、確実な冗長設計が可能 |
+| **CCIE 試験推奨** | 基本的な冗長化 | **トラフィック制御・アクティブ/スタンバイ指定の推奨構成** |
+
+### 2. AnyConnect VPN Load Balancing Cluster vs ASA Active/Standby Failover
+
+| 比較項目 | VPN Load Balancing Cluster | Active/Standby Stateful Failover |
+| :--- | :--- | :--- |
+| **主な目的** | **負荷分散 (Load Distribution)** ＋ 冗長 | **セッション維持 (Stateful Redundancy)** |
+| **切替時ユーザー影響** | セッション切断 ➔ **自動再接続** (再認証) | **完全無中断** (再認証なし・透明切替) |
+| **最大ノード数** | 最大 10 台 | 2 台 (Active / Standby) |
+| **IP アドレス形態** | Virtual Cluster IP ＋ 各ノード固有 IP | Active / Standby 共有 IP |
+| **動作モード** | Single Context Mode のみ | Single / Multi-Context Mode |
 
 ---
 
 ## 💡 ベストプラクティス
 
-1. **SAML / PKI 認証環境での `send-fqdn` 標準適用**:
-   * VPN Load Balancing を構成する際は、将来の SAML / MFA / 証明書認証導入を見越し、最初から `send-fqdn` および各ノードの物理 FQDN / パブリック証明書をアサインします。
-2. **Cluster Control Link (CCL) 9184 Jumbo Frame 確保**:
-   * System Clustering を採用する場合、データ面パケットのカプセル化ドロップを防ぐため、CCL の MTU を 9184 バイトに設定することを設計原則とします。
-3. **独立した AnyConnect IP Address Pool の設計**:
-   * 各ノードが独自に IP を割り当てる構成では、ノードごとに重複しないサブネットブロックをアサインして内部ルーティングの不整合を防ぎます。
-
+1. **DPD (Dead Peer Detection) の標準有効化**:
+   * Site-to-Site VPN や RAVPN の全冗長構成において、`crypto isakmp keepalive 10 3 periodic` または IKEv2 DPD を標準化し、障害発生時に無駄な SA を保持せず 30 秒以内にバックアップピアへ切り替えを促します。
+2. **HSRP ＋ RRI ＋ DPD のセット運用**:
+   * IOS ルーターで IPsec 冗長化を行う場合、HSRP VIP のみでは片側リンク障害時に即座に戻りルートが変更されないリスクがあります。必ず **Reverse Route Injection (`reverse-route`)** を併用し、IGP へルート再配布させて上流ネットワークの対称性を保証します。
+3. **DMVPN では Dual-Cloud 構成を採用**:
+   * マルチハブ DMVPN では、トラブルシュートとパス制御が容易な Dual-Cloud 構成を推奨します。EIGRP の `delay` や OSPF の `ip ospf cost` を `Tunnel0` と `Tunnel1` で変えるだけで、明快な Priority 制御が成立します。
 
 ---
 
 ## 📝 ラボ学習・設定サンプル例
 
-### 例1: ASA System Clustering (Spanned EtherChannel ＆ CCL 9184) の基本構築
+### 例1: ASA AnyConnect VPN Load Balancing Cluster の構築
 
 #### 問題
-2台の ASA (ASA-1, ASA-2) 間で Spanned EtherChannel モードのクラスタ `VPN_CLUSTER` を構築せよ。`Port-channel48` を Cluster Control Link (CCL) としてアサインし、CCL の MTU を 9184 バイトに設定せよ。
+ASA1 (Master) と ASA2 (Slave) において、仮想 IP `203.0.113.100` を用いた AnyConnect VPN ロードバランシングクラスタを構築せよ。
 
 #### 要件
-* ASA-1 の Priority を `1` (Master 優先)、ASA-2 を `10` に設定すること。
-* データ面インターフェイスは `Port-channel1` (Outside) とすること。
+* クラスタポート: `5555`
+* 暗号化キー: `cisco123`
+* ASA1 Priority: `10`, ASA2 Priority: `5`
 
 #### 設定例
 
 ```bash
-! ===== ASA-1 (Master) Configuration =====
-interface Port-channel48
- description Cluster Control Link
- port-channel min-links 1
- member-interface GigabitEthernet0/2
- member-interface GigabitEthernet0/3
-
-mtu cluster 9184
-
-interface Port-channel1
- port-channel span-cluster
- nameif outside
- security-level 0
- ip address 192.168.10.100 255.255.255.0
- member-interface GigabitEthernet0/0
- member-interface GigabitEthernet0/1
-
-cluster group VPN_CLUSTER
- local-unit ASA-1
- cluster-interface Port-channel48 ip 10.255.255.1 255.255.255.0
- priority 1
- key cisco123
+! ===== ASA1 (Master) =====
+vpn load-balancing
+ priority 10
+ cluster ip address 203.0.113.100
+ cluster port 5555
+ cluster interface-group outside
+ cluster encryption key cisco123
+ participate-in-load-balancing
  enable
 
-! ===== ASA-2 (Slave) Configuration =====
-interface Port-channel48
- description Cluster Control Link
- member-interface GigabitEthernet0/2
- member-interface GigabitEthernet0/3
-
-interface Port-channel1
- port-channel span-cluster
-
-cluster group VPN_CLUSTER
- local-unit ASA-2
- cluster-interface Port-channel48 ip 10.255.255.2 255.255.255.0
- priority 10
- key cisco123
- enable
-```
-
-#### 検証方法
-* `show cluster info` を実行し、`ASA-1 in state MASTER`、`ASA-2 in state SLAVE` と表示され、`show cluster info health` で `CCL MTU: 9184` であることを確認。
-
----
-
-### 例2: ASA VPN Load Balancing Cluster (2台構成) の基本設定
-
-#### 問題
-2台の独立した ASA (ASA1, ASA2) 間で VPN Load Balancing Cluster を構築せよ。Virtual Cluster IP として `192.168.10.200` を使用し、負荷分散を有効化せよ。
-
-#### 要件
-* グループ共有キーに `ClusterKey123` を設定すること。
-
-#### 設定例
-
-```bash
-! ===== ASA1 Configuration =====
+! ===== ASA2 (Slave) =====
 vpn load-balancing
- cluster ip address 192.168.10.200
- priority 10
- public-ip 192.168.10.101
- shared-secret ClusterKey123
- master-encryption
- participate-in-load-distribution
-
-! ===== ASA2 Configuration =====
-vpn load-balancing
- cluster ip address 192.168.10.200
  priority 5
- public-ip 192.168.10.102
- shared-secret ClusterKey123
- participate-in-load-distribution
+ cluster ip address 203.0.113.100
+ cluster port 5555
+ cluster interface-group outside
+ cluster encryption key cisco123
+ participate-in-load-balancing
+ enable
 ```
 
 #### 検証方法
-* `show vpn load-balancing` を実行し、ASA1 が `Role: Master`、ASA2 が `Role: Slave` で `Participating: Yes` と表示されることを確認。
+* ASA1 で `show vpn-sessiondb cluster` を実行し、ASA1 が `Master`、ASA2 が `Slave` として表示され、VIP `203.0.113.100` がバインドされていることを確認する。
 
 ---
 
-### 例3: SAML 認証対応の FQDN リダイレクト (`send-fqdn`) 設定
+### 例2: ASA Active/Standby Stateful Failover ＆ HTTP レプリケーション
 
 #### 問題
-ASA VPN Load Balancing Cluster において、SAML シングルサインオン時の証明書不一致および Redirect 失敗を防ぐため、リダイレクト時に IP ではなく物理 FQDN をクライアントへ通知するよう設定せよ。
+2台の ASA 間で Stateful Failover を構成し、障害切替時にも HTTP セッションステートが維持されるよう設定せよ。
 
 #### 要件
-* ASA1 FQDN: `asa1-vpn.corp.local`, ASA2 FQDN: `asa2-vpn.corp.local`
+* `failover replication http` を使用すること。
 
 #### 設定例
 
 ```bash
-! ===== ASA1 Configuration =====
-vpn load-balancing
- fqdn asa1-vpn.corp.local
- send-fqdn
-
-! ===== ASA2 Configuration =====
-vpn load-balancing
- fqdn asa2-vpn.corp.local
- send-fqdn
+! ===== ASA Primary Configuration =====
+failover lan unit primary
+failover lan interface FO_LAN GigabitEthernet0/3
+failover link FO_STATE GigabitEthernet0/4
+failover interface ip FO_LAN 10.255.255.1 255.255.255.252 standby 10.255.255.2
+failover interface ip FO_STATE 10.255.255.5 255.255.255.252 standby 10.255.255.6
+failover key cisco123
+failover replication http
+failover
 ```
 
 #### 検証方法
-* クライアント接続時に `debug vpn load-balancing code` を有効化し、HTTP 302 Redirect 応答ヘッダー内に `asa2-vpn.corp.local` が指定されていることを確認。
+* `show failover` を実行し、`failover replication http` が有効化され、Stateful updates が送受信されていることを確認する。
 
 ---
 
-### 例4: ASA Clustering 上での AnyConnect トンネルグループと Address Pool
+### 例3: Router Site-to-Site Multiple Crypto Map Peers ＋ DPD
 
 #### 問題
-ASA クラスタ環境において、AnyConnect クライアント用のアドレスプール `POOL_ANYCONNECT` (`10.200.1.1`–`10.200.1.254`) を一元定義し、トンネルグループ `TG_VPN` にアサインせよ。
+ルーター R1 において、対向 HQ のプライマリ IP `198.51.100.1` およびセカンダリ IP `198.51.100.2` に対する 2 重化 Site-to-Site IPsec トンネルを構成せよ。
 
 #### 要件
-* アドレスプールは `/24` マスクとすること。
+* DPD 周期: 10 秒, 再試行: 3 回。
 
 #### 設定例
 
 ```bash
-! ===== ASA Master Console Configuration =====
-ip local pool POOL_ANYCONNECT 10.200.1.1-10.200.1.254 mask 255.255.255.0
+! ===== R1 Configuration =====
+crypto isakmp keepalive 10 3 periodic
 
-group-policy GP_VPN internal
-group-policy GP_VPN attributes
- vpn-tunnel-protocol ssl-client ikev2
- split-tunnel-policy tunnelall
-
-tunnel-group TG_VPN type remote-access
-tunnel-group TG_VPN general-attributes
- address-pool POOL_ANYCONNECT
- default-group-policy GP_VPN
-tunnel-group TG_VPN webvpn-attributes
- group-alias Corporate_RA_VPN enable
+crypto map CMAP_HQ 10 ipsec-isakmp
+ set peer 198.51.100.1 198.51.100.2
+ set transform-set TSET_AES_SHA
+ match address ACL_VPN
 ```
 
 #### 検証方法
-* `show running-config tunnel-group` を確認し、クラスタ全体でアドレスプールが正常に認識されていることを確認。
+* `show crypto map` を実行し、`Peer` に `198.51.100.1` および `198.51.100.2` が順序通り登録されていることを確認する。
 
 ---
 
-### 例5: IKEv2 / DTLS リダイレクト対応の VPN Load Balancing 設定
+### 例4: Router HSRP ＋ RRI ＋ IPsec Stateful High Availability (SSO/SCTP)
 
 #### 問題
-AnyConnect クライアントが IKEv2 または DTLS トンネルを確立する際、VPN Load Balancing が正常に動作するよう IKEv2 リダイレクト機能を有効化せよ。
+ルーター R1 (Primary) と R2 (Secondary) において、HSRP VIP `172.16.100.1` を用い、IPsec SA ステートを動的同期させる Stateful IPsec HA を構成せよ。
 
 #### 要件
-* `vpn load-balancing` モード内で設定すること。
+* HSRP グループ名 `VPN_HA_GROUP`
+* RRI (`reverse-route`) を設定すること。
 
 #### 設定例
 
 ```bash
-! ===== ASA1 / ASA2 Configuration =====
-vpn load-balancing
- group-url https://vpn.corp.local/anyconnect enable
- participate-in-load-distribution
+! ===== R1 (Primary Router) =====
+crypto ha
+ ike VIP 172.16.100.1
+ ipsec VIP 172.16.100.1
+
+interface GigabitEthernet0/0
+ ip address 172.16.100.2 255.255.255.0
+ standby 1 ip 172.16.100.1
+ standby 1 priority 110
+ standby 1 preempt
+ standby 1 name VPN_HA_GROUP
+ crypto map CMAP_HQ redundancy VPN_HA_GROUP
+
+crypto map CMAP_HQ 10 ipsec-isakmp
+ set peer 203.0.113.10
+ set transform-set TSET_AES_SHA
+ match address ACL_VPN
+ reverse-route
 ```
 
 #### 検証方法
-* AnyConnect IKEv2 接続時に `debug ikev2 platform` を実行し、`IKEv2 Redirect` 通知パケットがクライアントへ返却されることを確認。
+* R1 および R2 で `show crypto ha` を実行し、IKE/IPsec VIP が定義され、Sync 状態が正常であることを確認する。
 
 ---
 
-### 例6: ASA Clustering での Site-to-Site IPsec VPN (Centralized) の設定
+### 例5: IP SLA Tracking に基づく Floating Static Route Failover
 
 #### 問題
-ASA クラスタ環境において、対向ルーター `203.0.113.50` との Site-to-Site IKEv2 IPsec VPN を Centralized 機能として構成せよ。
+ルーター R1 において、対向 IP `198.51.100.1` への ICMP プローブを IP SLA 1 で監視し、Primary 経路断絶時に Backup 経路へ切り替えよ。
 
 #### 要件
-* Pre-shared-key: `CiscoIPsecKey123`
+* Primary Route AD: `1`, Backup Route AD: `10`
 
 #### 設定例
 
 ```bash
-! ===== ASA Master Configuration =====
-crypto ikev2 policy 10
- proposal aes-256 integrity sha256 group 14
-exit
+! ===== R1 Configuration =====
+ip sla 1
+ icmp-echo 198.51.100.1 source-interface GigabitEthernet0/0
+ frequency 5
 
-crypto ikev2 enable outside
+ip sla schedule 1 start-time now life forever
 
-tunnel-group 203.0.113.50 type ipsec-l2l
-tunnel-group 203.0.113.50 ipsec-attributes
- ikev2 local-authentication pre-shared-key CiscoIPsecKey123
- ikev2 remote-authentication pre-shared-key CiscoIPsecKey123
+track 1 ip sla 1 reachability
 
-access-list ACL_S2S extended permit ip 10.1.0.0 255.255.0.0 10.2.0.0 255.255.0.0
-
-crypto ipsec ikev2 ipsec-proposal PROPOSAL_AES256
- protocol esp encryption aes-256 integrity sha-256
-
-crypto map CMAP 10 match address ACL_S2S
-crypto map CMAP 10 set peer 203.0.113.50
-crypto map CMAP 10 set ikev2 ipsec-proposal PROPOSAL_AES256
-crypto map CMAP interface outside
+ip route 10.100.0.0 255.255.0.0 198.51.100.1 track 1   ! Primary Route
+ip route 10.100.0.0 255.255.0.0 198.51.200.1 10        ! Backup Route
 ```
 
 #### 検証方法
-* `show crypto ikev2 sa` を実行し、Control Node (Master) 上で IKEv2 SA が確立されていることを確認。
+* `show track 1` および `show ip route` を実行し、`198.51.100.1` ダウン時にルーティングテーブルがバックアップアドレスへ切り替わることを確認する。
 
 ---
 
-### 例7: VPN Load Balancing ポートおよび Cluster Key 設定
+### 例6: DMVPN Dual-Hub Single-Cloud (DHSD) Phase 3 構成
 
 #### 問題
-ASA VPN Load Balancing Cluster において、クラスタ間キープアライブポートをカスタムポート `9050` に変更し、グループ共有キー `SecureKey999` を設定せよ。
+Spoke ルーターにおいて、単一の GRE トラフィック（`Tunnel0`）内で Hub1 (`172.16.1.1`) および Hub2 (`172.16.1.2`) を NHS として並列登録せよ。
 
 #### 要件
-* `cluster port` コマンドを使用すること。
+* Single Subnet: `172.16.1.0/24`
 
 #### 設定例
 
 ```bash
-! ===== ASA1 / ASA2 Configuration =====
-vpn load-balancing
- cluster port 9050
- shared-secret SecureKey999
+! ===== DMVPN Spoke Configuration =====
+interface Tunnel0
+ ip address 172.16.1.10 255.255.255.0
+ ip mtu 1400
+ ip tcp adjust-mss 1360
+ ip nhrp authentication DMVPN_KEY
+ ip nhrp network-id 100
+ ip nhrp holdtime 300
+ ip nhrp nhs 172.16.1.1 nbma 198.51.100.1
+ ip nhrp nhs 172.16.1.2 nbma 198.51.100.2
+ ip nhrp shortcut
+ tunnel source GigabitEthernet0/0
+ tunnel mode gre multipoint
+ tunnel protection ipsec profile IPSEC_PROF_DMVPN
 ```
 
 #### 検証方法
-* `show vpn load-balancing` を実行し、`Cluster Port: 9050` と表示されることを確認。
+* `show ip nhrp nhs` を実行し、両 Hub (`172.16.1.1`, `172.16.1.2`) が RE (Registered) 状態となっていることを確認する。
 
 ---
 
-### 例8: Firepower 4100 FXOS 上での Inter-Chassis ASA VPN Clustering 構成
+### 例7: DMVPN Dual-Hub Dual-Cloud (DHDD) Phase 3 ＋ EIGRP 優先度制御
 
 #### 問題
-Firepower 4100 シャーシ 2台において、FXOS ディレクトリから ASA インスタンスのクラスタグループ `FXOS_CLUSTER` を構成せよ。
+Spoke ルーターにおいて、独立した 2 つの DMVPN クラウド (`Tunnel0`: Hub1, `Tunnel1`: Hub2) を定義し、EIGRP の `delay` 設定により Hub1 経由を優先せよ。
 
 #### 要件
-* CCL に `Port-channel 48` を割り振ること。
-
-#### 設定例
-
-```text
-[ FXOS Chassis Manager Steps ]
-1. FXOS UI ➔ Logical Devices ➔ Add Device
-2. Name: ASA_NODE1, Template: ASA
-3. [✓] Enable Clustering
-   - Cluster Name: FXOS_CLUSTER
-   - Cluster Control Link: Port-channel48
-   - Local IP: 10.255.255.1/24
-4. Save ＆ Deploy.
-```
-
-#### 検証方法
-* FXOS CLI で `show cluster group` を実行し、両シャーシノードが `UP/ONLINE` であることを確認。
-
----
-
-### 例9: ASA Clustering における AnyConnect Session Timeout/Reconnect 設定
-
-#### 問題
-ASA クラスタ環境において、ノード切替発生時に AnyConnect クライアントが切断されず 300 秒間透過的に再接続を試行するようグループポリシーを設定せよ。
-
-#### 要件
-* `auto-reconnect` タイマーを 300 秒に指定すること。
+* Tunnel0 Delay: `1000`, Tunnel1 Delay: `2000`
 
 #### 設定例
 
 ```bash
-! ===== ASA Configuration =====
-group-policy GP_CORPORATE attributes
- anyconnect-auto-reconnect-timeout 300
- auto-reconnect enable
+! ===== DMVPN Spoke Configuration =====
+interface Tunnel0
+ description Primary Cloud to Hub 1
+ ip address 172.16.1.10 255.255.255.0
+ ip nhrp network-id 100
+ ip nhrp nhs 172.16.1.1 nbma 198.51.100.1
+ delay 1000
+
+interface Tunnel1
+ description Backup Cloud to Hub 2
+ ip address 172.16.2.10 255.255.255.0
+ ip nhrp network-id 200
+ ip nhrp nhs 172.16.2.1 nbma 198.51.100.2
+ delay 2000
+
+router eigrp 100
+ network 172.16.1.0 0.0.0.255
+ network 172.16.2.0 0.0.0.255
 ```
 
 #### 検証方法
-* `show running-config group-policy` を確認し、タイマーが 300 秒に設定されていることを確認。
+* `show ip route eigrp` を実行し、送信元トラフィックの Next-hop が `Tunnel0` (Hub1) 側になっていることを確認する。
 
 ---
 
-### 例10: ASA VPN Load Balancing Master 障害時の Virtual Master 昇格設定
+### 例8: FlexVPN Dual-Hub Resiliency (Backup Peers ＋ IP SLA Track)
 
 #### 問題
-ASA VPN Load Balancing Cluster において、現在の Master (Priority 10) がダウンした際、即座に Slave (Priority 20) が Virtual Master へ昇格するよう Priority をチューニングせよ。
+FlexVPN Client ルーターにおいて、Primary Hub (`172.16.1.1`) への到達性を IP SLA 1 で追跡し、障害時に Secondary Hub (`172.16.2.1`) へ切り替えよ。
 
 #### 要件
-* ASA2 の Priority を `20` (最高値) に変更すること。
+* `match parent backhaul` 設定を使用すること。
 
 #### 設定例
 
 ```bash
-! ===== ASA2 Configuration =====
-vpn load-balancing
- priority 20
+! ===== FlexVPN Client Configuration =====
+track 1 ip sla 1 reachability
+
+crypto ikev2 profile PROF_FLEX_CLIENT
+ match identity remote fqdn hub.example.com
+ identity local fqdn client.example.com
+ authentication local pre-share key Cisco123
+ authentication remote pre-share key Cisco123
+ match parent backhaul track 1
+  peer 1 172.16.1.1 pref 1
+  peer 2 172.16.2.1 pref 2
 ```
 
 #### 検証方法
-* ASA1 の外部ポートを `shutdown` にし、ASA2 上で `show vpn load-balancing` を実行して `Role: Master` へ変更されたことを確認。
+* Track 1 を Down に変更し、`show crypto ikev2 sa` で Client の接続先が `172.16.2.1` にフォールバックされることを確認する。
 
+---
+
+### 例9: FlexVPN IKEv2 Load Balancer (HSRP VIP ＋ RFC 5685 IKEv2 Redirect)
+
+#### 問題
+FlexVPN Server 1 (Master) において HSRP VIP `192.168.10.1` を提示し、到着したクライアントを最大セッション数 1000 の負荷計算に基づきリダイレクトせよ。
+
+#### 要件
+* `crypto ikev2 cluster` を使用すること。
+
+#### 設定例
+
+```bash
+! ===== FlexVPN Server 1 (Master) =====
+crypto ikev2 cluster
+ standby-group Group1
+ master
+ max-session 1000
+ no shutdown
+
+interface GigabitEthernet0/0
+ ip address 192.168.10.2 255.255.255.0
+ standby 1 ip 192.168.10.1
+ standby 1 name Group1
+ standby 1 priority 110
+ standby 1 preempt
+```
+
+#### 検証方法
+* Client から HSRP VIP に接続し、`show crypto ikev2 cluster` でクライアントが Slave ルーターへリダイレクトされることを確認する。
+
+---
+
+### 例10: FlexVPN Backup Group による動的トンネル重複回避
+
+#### 問題
+同一ルーター上の 2 つの FlexVPN Client Profile (`flex1`, `flex2`) に対し、同一 Peer への重複接続を防止する `backup group 10` を割り当てよ。
+
+#### 要件
+* `backup group 10` を設定すること。
+
+#### 設定例
+
+```bash
+! ===== FlexVPN Client Profile 1 =====
+crypto ikev2 profile flex1
+ match identity remote fqdn hub1.example.com
+ identity local fqdn client1.example.com
+ backup group 10
+
+! ===== FlexVPN Client Profile 2 =====
+crypto ikev2 profile flex2
+ match identity remote fqdn hub2.example.com
+ identity local fqdn client2.example.com
+ backup group 10
+```
+
+#### 検証方法
+* `debug crypto ikev2 client flexvpn` を有効化し、一方のプロファイルがアクティブな場合に他方のプロファイルが同一ピア接続をスキップすることを確認する。
 
 ---
 
@@ -621,118 +741,117 @@ vpn load-balancing
 
 ### 1. コンフィグ読解問題
 
-**問題**: 以下のコンフィグが設定された ASA1 および ASA2 の VPN Load Balancing クラスタ環境に関する記述として最も適切なものはどれか。
+**問題**: 以下のコンフィグが投入された ASA1 および ASA2 の VPN Load Balancing クラスタ環境において、AnyConnect クライアントが `https://vpn.example.com/employees` に接続した際、リダイレクト後に 404 エラーが発生した。原因として正しいものはどれか。
 
 ```bash
-! ===== ASA1 =====
-vpn load-balancing
- cluster ip address 192.168.10.200
- public-ip 192.168.10.101
- fqdn asa1-vpn.corp.local
- send-fqdn
- shared-secret Key123
+! ASA-1 (Master)
+tunnel-group TG_EMP webvpn-attributes
+ group-url https://vpn.example.com/employees enable
 
-! ===== ASA2 =====
-vpn load-balancing
- cluster ip address 192.168.10.200
- public-ip 192.168.10.102
- fqdn asa2-vpn.corp.local
- send-fqdn
- shared-secret Key123
+! ASA-2 (Slave, Public FQDN: asa2.example.com)
+tunnel-group TG_EMP webvpn-attributes
+ group-url https://vpn.example.com/employees enable
 ```
 
-* A) SAML 2.0 認証を有効化した際、クライアントは Redirect 応答で IP アドレスを受け取り、証明書警告が表示される。
-* B) `send-fqdn` が設定されているため、リダイレクト応答ヘッダーには IP アドレスではなく FQDN (`asa2-vpn.corp.local`) が挿入され、SAML SSO 認証や証明書検証の失敗を防止できる。
-* C) この構成では IKEv2 トンネルのリダイレクトはサポートされない。
-* D) ASA1 と ASA2 は ASA System Clustering モードで 1 台の論理アプライアンスとして統合されている。
+* A) ASA1 の Priority が指定されていないため。
+* B) Slave ノード (ASA2) の Connection Profile に、**ASA2 独自の Public FQDN (`https://asa2.example.com/employees`) 用の Group URL** が追加設定されていないため。
+* C) UDP 5555 ポートがブロックされているため。
+* D) AnyConnect のライセンスが不足しているため。
 
 **正解**: **B**  
-**解説**: **`send-fqdn`** コマンドを定義することで、Master がクライアントへリダイレクトを指示する際、IP アドレスではなく FQDN (`asa2-vpn.corp.local`) を使用します。これにより、SAML IdP 側での Redirect URI 検証および SSL 証明書の Common Name / SAN 照合の破綻を防ぐことができます。
+**解説**: VPN Load Balancing Cluster では、Master ノードがクライアントを Slave ノードの固有 Public IP / FQDN アドレスへリダイレクトします。そのため、各 Slave ノードの Connection Profile には、**Virtual Cluster IP 用の Group URL と 自ノード固有 FQDN/IP 用の Group URL の双方** を登録しておく必要があります。
 
 ---
 
 ### 2. トラブルシュート問題
 
-**問題**: ASA System Clustering モードで AnyConnect リモートアクセス VPN を構築した。トンネル自体は確立するが、大容量ファイル転送や Web 閲覧時にパケットの遅延およびドロップが著しく発生する。`show cluster info health` を確認したところ、CCL の MTU が `1500` バイトに指定されていた。最も適切な対処方法はどれか。
+**問題**: ルーター間で `set peer 198.51.100.1 198.51.100.2` を用いた Crypto Map を構成している。Primary ピア (`198.51.100.1`) の物理回線が切断されたにもかかわらず、切り替えに 3 分以上かかった。原因および最も効果的な対処方法はどれか。
 
-* A) ASA の Outside インターフェイスの MTU を 1400 に変更する。
-* B) **`mtu cluster 9184`** コマンドを投入し、CCL の MTU をジャンボフレームに拡張するとともに、対向スイッチ側ポートも Jumbo Frame を許可する。
-* C) `same-security-traffic permit intra-interface` を投入する。
-* D) SSL VPN を全廃し IKEv2 IPsec に切り替える。
+* A) RRI が設定されていない。`reverse-route` を追加する。
+* B) DPD (Dead Peer Detection) が設定されていない。`crypto isakmp keepalive 10 3 periodic`（または IKEv2 DPD）を設定して短時間で障害検出させる。
+* C) Static Route のディスタンス値が大きすぎる。
+* D) HSRP が設定されていない。
 
 **正解**: **B**  
-**解説**: ASA Clustering では、VPN パケットがノード間を転送される際にクラスタ用カプセル化ヘッダー（約 100 バイト）が付加されます。CCL の MTU が 1500 のままだとパケットが断片化・ドロップするため、**`mtu cluster 9184`** (Jumbo Frame) の設定が必須です。
+**解説**: Multiple Crypto Peers において DPD が未設定の場合、ルーターは ISAKMP / IPsec タイムアウトまで相手の障害を認識できず、切替に長い時間を要します。DPD (Keepalive) を設定することで、数秒〜数十秒で故障を検知してセカンダリピアへ再接続できます。
 
 ---
 
 ### 3. Design 問題
 
-**問題**: 新規マルチデータセンター設計において、Cisco FTD (Firepower Threat Defense) アプライアンス群による Inter-Chassis Clustering (Spanned Mode) を採用する予定である。この環境で 10,000 名規模の AnyConnect RA-VPN ユーザーを収容したい。設計上の判断として正しいものはどれか。
+**問題**: 全国 50 箇所の拠点（Spoke）を 2 箇所のデータセンター（Hub1, Hub2）へ DMVPN で収容する設計を行う。ハブ回線の完全分離、帯域に応じたプライマリ/バックアップの明快なパス制御、および暗号化オーバーレイの完全制御を実現するための最適構成はどれか。
 
-* A) FTD クラスタ上でそのまま AnyConnect RA-VPN トンネルグループを定義する。
-* B) FTD クラスタは AnyConnect RA-VPN をサポートしないため、RA-VPN 用に**独立した ASA アプライアンス群による ASA VPN Load Balancing Cluster** を別個に設計・配置する。
-* C) FTD を Transparent Mode に変更して AnyConnect を収容する。
-* D) FTD 上で FlexConfig を用いて VPN Load Balancing を強制有効化する。
+* A) DMVPN Phase 1 Single Cloud
+* B) DMVPN Phase 3 Dual-Hub Dual-Cloud (DHDD)
+* C) DMVPN Phase 2 Single Cloud
+* D) FlexVPN Single Hub
 
 **正解**: **B**  
-**解説**: **FTD Clustering 環境では Remote Access VPN (AnyConnect) は完全非サポート** です。そのため、RA-VPN ヘッドエンドとして独立した ASA による **ASA VPN Load Balancing Cluster** を配置するのが Cisco の標準推奨設計です。
+**解説**: **DMVPN Phase 3 Dual-Hub Dual-Cloud (DHDD)** は、2つの独立した mGRE サブネット（Cloud 1 ＆ Cloud 2）と Spoke 側の 2 つの Tunnel インターフェイスを使用するため、IGP メトリック（Delay / Cost）による明快かつ柔軟なトラフィック制御と障害分離が実現します。
 
 ---
 
 ### 4. 実装問題
 
-**問題**: ASA VPN Load Balancing Cluster において、2台の ASA 間でハートビートメッセージおよび負荷度ステータスの動的交換に使用されるデフォルトのプロトコルおよび UDP ポート番号はどれか。
+**問題**: IOS ルーターで HSRP VIP を Tunnel Endpoint とした Site-to-Site IPsec VPN を構築する際、Crypto Map を HSRP グループにバインドするために使用するコマンドはどれか。
 
-* A) TCP 443
-* B) UDP 500
-* C) **UDP 902**
-* D) TCP 8443
+* A) `crypto map CMAP redundancy <HSRP_NAME>`
+* B) `standby 1 ipsec-enable`
+* C) `crypto ha active`
+* D) `ipsec group hsrp`
 
-**正解**: **C**  
-**解説**: ASA VPN Load Balancing Cluster ノード間では、**UDP 902 ポート** を使用してクラスタキープアライブおよび負荷情報（現在のアクティブ接続数、CPU 使用率）を定期交換します。
+**正解**: **A**  
+**解説**: Crypto Map を HSRP トラッキングおよび Virtual IP と連動させるには、インターフェイス側で `standby 1 name <NAME>` を設定し、Crypto Map 内で **`crypto map <MAP_NAME> <SEQ> ipsec-isakmp`** の下で **`redundancy <NAME>`** を指定します。
 
 ---
 
 ### 5. コンフィグ読解問題
 
-**問題**: ASA System Clustering における VPN (Site-to-Site IPsec ＆ Remote Access VPN) の機能カテゴリ分類（Feature Type）として正しいものはどれか。
+**問題**: FlexVPN Load Balancer (RFC 5685) において、クライアントが HSRP VIP 宛てに IKE_SA_INIT パケットを送信した際、リダイレクト機能を利用可能であることを示すために送信に含まれる IKEv2 Notify メッセージはどれか。
 
-* A) Distributed Feature (各ノードが完全に独立して処理)
-* B) **Centralized Feature** (Control Node / Master が制御プレーン処理を管轄し、必要に応じて Data Node へ分散)
-* C) Non-supported Feature (クラスタ上では一切利用不可)
-* D) Asymmetric Feature (片方向のみ処理可能)
+* A) `REDIRECT_SUPPORTED`
+* B) `LOAD_BALANCING_OK`
+* C) `CLUSTER_MEMBER_REQ`
+* D) `COOKIE_CHALLENGE`
 
-**正解**: **B**  
-**解説**: VPN 機能は ASA Clustering において **Centralized Feature（中央集権型機能）** に指定されており、IKE / TLS ネゴシエーションやアドレス割り当てなどの制御プレーン処理は **Control Node (Master)** 上で集中的に実行されます。
+**正解**: **A**  
+**解説**: RFC 5685 に基づき、IKEv2 クライアントがリダイレクト処理に対応していることをサーバーへ伝えるため、IKE_SA_INIT パケット内に **`REDIRECT_SUPPORTED`** 通知メッセージを格納します。
 
 ---
 
 ## 🔗 参考リソース
 
-* [Cisco ASA Series General Operations Configuration Guide: Clustering](https://www.cisco.com/)
-* [Cisco ASA Series VPN Configuration Guide: Load Balancing VPN Cluster](https://www.cisco.com/)
-* [Cisco Technical Notes: Configure SAML Single Sign-On with ASA VPN Load Balancing](https://www.cisco.com/)
-* [Cisco Live: Deep Dive into Cisco ASA Clustering Architecture and VPN Integration (BRKSEC-3032)](https://www.ciscolive.com/)
+* [Cisco ASA Series General Operations Configuration Guide: VPN Load Balancing](https://www.cisco.com/)
+* [Cisco ASA Series General Operations Configuration Guide: High Availability](https://www.cisco.com/)
+* [Cisco IOS Flexible VPN Configuration Guide: FlexVPN Load Balancer and High Availability](https://www.cisco.com/)
+* [Cisco Dynamic Multipoint VPN (DMVPN) Design Guide](https://www.cisco.com/)
+* [Cisco Technical Notes: Configure and Troubleshoot IPsec VPN High Availability with HSRP and RRI](https://www.cisco.com/)
+* [Cisco Live: Advanced Site-to-Site and Remote Access VPN High Availability Architecture (BRKSEC-3033)](https://www.ciscolive.com/)
 
 ---
 
 ## 📝 **補足（Notes）**
 
 * **学習メモ**:
-  * CCIE Security ラボ試験で VPN 高可用性 / クラスタリングが出題された場合の構成判断フローチャート：
-    * **「Scale-out Remote Access VPN with SAML / FQDN redirect」** ➔ **ASA VPN Load Balancing Cluster** (`vpn load-balancing` ＋ `cluster ip` ＋ `send-fqdn` ＋ `fqdn <NODE_FQDN>`)。
-    * **「Scale-out Firewall ＆ Site-to-Site IPsec VPN using single logical unit」** ➔ **ASA System Clustering** (`cluster group` ＋ `mtu cluster 9184` ＋ `port-channel span-cluster`)。
-* **図解（VPN Load Balancing vs System Clustering）**:
+  * CCIE Security ラボ試験で VPN High Availability が問われた場合の選択フローチャート：
+    * **「Load balance AnyConnect users across multiple ASAs」** ➔ ASA VPN Load Balancing Cluster (`vpn load-balancing` ＋ Group URL 二重登録)。
+    * **「Zero downtime failover for AnyConnect / S2S on ASA」** ➔ ASA Active/Standby Stateful Failover (`failover link` ＋ `failover replication http`)。
+    * **「Backup peer for Site-to-Site IPsec map」** ➔ `set peer IP1 IP2` ＋ `crypto isakmp keepalive 10 3 periodic` (DPD)。
+    * **「HSRP Router Redundancy with IPsec」** ➔ HSRP (`standby name`) ＋ Crypto Map (`redundancy`) ＋ `reverse-route` (RRI) ＋ `crypto ha` (SSO)。
+    * **「Dual Hub DMVPN with strict active/backup pathing」** ➔ DMVPN Dual-Cloud (DHDD) Phase 3 ＋ `delay` 調整。
+    * **「FlexVPN Server Cluster Load Balancing」** ➔ FlexVPN Load Balancer (`crypto ikev2 cluster`) ＋ HSRP VIP ＋ RFC 5685 Redirect。
+* **図解（VPN HA パイプラインマトリクス）**:
   ```text
-  [ ASA VPN Load Balancing Cluster ]
-  - Client connects to VIP ──► Master ASA redirects to Slave ASA physical FQDN/IP via HTTP 302 / IKEv2 Redirect.
-  - Each ASA is an independent firewall.
-
-  [ ASA System Clustering ]
-  - Client connects to Single Cluster IP ──► Switched via Spanned EtherChannel / cLACP.
-  - Control Node (Master) handles VPN negotiation; Data Nodes handle decapsulation via CCL (Jumbo MTU 9184).
+  [ Client / Initiator ]
+            │
+            ├── AnyConnect RAVPN Cluster ──► Master VIP ──► (HTTP 302 / IKEv2 Redirect) ──► Least-Loaded Slave ASA
+            │
+            ├── FlexVPN Load Balancer ─────► HSRP VIP ───► (RFC 5685 Redirect) ───────────► Least-Loaded FlexVPN Server
+            │
+            ├── S2S Multiple Peers ────────► Primary Peer (IP1) ──► (DPD Timeout) ────────► Secondary Peer (IP2)
+            │
+            └── DMVPN / FlexVPN Dual-Cloud ─► Cloud 1 (Low Delay) ──► (Link Down) ───────► Cloud 2 (High Delay)
   ```
 * **注意点**:
-  * ラボ試験で VPN Load Balancing を設定した後は、必ず `show vpn load-balancing` を実行して各ノードの Role (Master / Slave) および `Participating: Yes` を確認し、SAML 環境では `send-fqdn` が投入されていることを二重チェックしてください。
-
+  * ラボ試験で VPN HA を設定した後は、`show vpn-sessiondb cluster`、`show failover`、`show crypto session`、`show crypto ikev2 cluster`、`show ip nhrp nhs` を必ず実行し、フェールオーバー時やリダイレクト時に通信が維持されることを確認・証明してください。
 
