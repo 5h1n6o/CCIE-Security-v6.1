@@ -6,216 +6,667 @@ parent: 3.5-Wireless-security
 grand_parent: 3.0-Security-Infrastructure
 ---
 
-# 3.5.d TKIP (Temporal Key Integrity Protocol)
-
-**TKIP (Temporal Key Integrity Protocol)** は、脆弱性が指摘された WEP (Wired Equivalent Privacy) の欠点を補うために、既存のハードウェアで動作するように設計された暫定的な暗号化プロトコルです。CCIE Security v6.1 のブループリントでは、ワイヤレスセキュリティの歴史的背景と、現代のネットワークにおける制限事項を理解するために不可欠な項目として定義されています。
-
----
+# 3.5.d TKIP
 
 ## 📘 概要
 
-*   **機能概要**: RC4 暗号アルゴリズムをベースに、パケットごとのキーミキシング、整合性チェック（MIC）、および拡張初期化ベクトル（IV）を導入することでセキュリティを強化したプロトコルです。
-*   **利用目的**: ハードウェアのアップグレードが困難なレガシーデバイスに対し、WEP 以上のセキュリティを提供することを目的としています。
-*   **どのような場面で利用するか**: 現代の設計では**非推奨**ですが、AES をサポートしていない非常に古いレガシー端末を接続せざるを得ない環境でのみ使用されます。
+Temporal Key Integrity Protocol (TKIP) は、レガシーな Wired Equivalent Privacy (WEP) の深刻なセキュリティ上の脆弱性を迅速に解決するために、IEEE 802.11i ワーキンググループおよび Wi-Fi Alliance (WPA: Wi-Fi Protected Access) によって策定された過渡的な無線暗号化プロトコルです。
+
+WEPが抱えていた「固定暗号鍵の使用」「24ビットと短い初期化ベクトル (IV) による鍵再利用問題」「改ざん検知メカニズム (CRC-32) の脆弱性」を克服するため、TKIPは既存のWEP対応ハードウェア（RC4暗号化エンジン）をそのまま活用しつつ、ファームウェアおよびソフトウェアのアップデートのみで導入できるように設計されました。
+
+TKIPの主な利用目的と導入背景は以下の通りです。
+
+* **WEPの緊急代替手段**: ハードウェアの買い替えを伴わずに、RC4暗号エンジン上で動的な鍵生成および強固な整合性チェックを追加。
+* **パケットごとの鍵ミキシング (Per-Packet Key Mixing)**: 128ビットの Temporal Key (TK) と送信元MACアドレス、48ビットの Sequence Counter (TSC) を組み合わせてパケットごとに固有のRC4鍵を動的生成。
+* **メッセージ送信元認証と改ざん防止 (Michael MIC)**: CRC-32に代わり、64ビットの暗号学的メッセージ整合性コード (Michael MIC) を導入し、アクティブなデータ改ざん攻撃をブロック。
+* **リプレイ攻撃防止**: 48ビットの TKIP Sequence Counter (TSC) を導入し、受信側で単調増加しないパケットを即座に破棄。
+
+現在では、TKIPの暗号基盤であるRC4およびMichael MICに対する各種攻撃手法が確立されたこと、また現代の高速無線規格（802.11n / 802.11ac / 802.11ax / 802.11be）においてTKIPの使用が規格上禁止（使用時は最大通信速度が 54 Mbps に制限される）されていることから、TKIPは完全なレガシー技術として非推奨（Deprecated）となっています。しかし、CCIE Security ラボ試験においては、レガシー端末の保護、WPA1/WPA2混在環境のトラブルシューティング、ならびにMIC Failure Countermeasures（Countermeasure動作）の挙動理解において重要なテーマとなります。
+
 
 ---
 
 ## 🔑 要点
 
+TKIPの主要な技術的特徴、制限事項、設計上の注意点を下表に示します。
+
 | 項目 | 内容 |
-| :--- | :--- |
-| **暗号アルゴリズム** | RC4 (WEP と同一だが、鍵管理が動的) |
-| **整合性チェック** | **Michael (MIC)** アルゴリズム |
-| **鍵管理方式** | **4-Way Handshake** による動的な生成 |
-| **主なメリット** | WEP 対応の旧型ハードウェアでファームウェア更新のみで動作可能 |
-| **主なデメリット** | セキュリティの脆弱性、スループットが最大 **54Mbps** に制限される |
-| **現在のステータス** | 802.11n 以降の規格ではサポート外（または非推奨） |
+| --- | --- |
+| **特徴** | WEPハードウェア(RC4エンジン)と互換性を保持しつつ、パケットごとの鍵生成(PPK)とメッセージ整合性コード(Michael MIC)を追加した過渡的暗号化プロトコル |
+| **用途** | レガシーデバイス(WPA1対応機器、旧式バーコードスキャナ等)の無線接続保護、802.11i移行期の暫定暗号化 |
+| **メリット** | WEP対応ハードウェアのファームウェア/ソフトウェア更新のみで適用可能であり、追加のハードウェア投資が不要 |
+| **デメリット** | RC4ストリーム暗号依存による構造的脆弱性、Michaelアルゴリズムの計算コストと脆弱性、802.11n以降でのデータレート制限(最大54 Mbps) |
+| **対応機種** | Cisco AireOS WLC、Catalyst 9800 WLC (互換性維持目的)、Cisco Autonomous AP、IOS-XE Wireless |
+| **制限事項** | 802.11n / 802.11ac / 802.11ax 規格においてTKIP使用時はHT (High Throughput) / VHT / HE レートが不可、最大 54 Mbps (802.11a/g 速度) に制限 |
+| **設計上の注意点** | MIC違反(MIC Failure)が60秒以内に2回発生すると、WLC/APは全クライアントを組織的に切断し、60秒間該当SSIDでの通信を停止(Countermeasures動作)するため、DoS攻撃の標的となりやすい |
+
 
 ---
 
 ## 🏗 動作原理
 
-TKIP は、WEP の致命的な弱点であった「固定鍵」と「短い IV」を改善するために、以下の要素を組み合わせています。
+TKIPは、レガシーなRC4暗号化ハードウェアをそのまま流用しながらセキュリティを高めるため、複数の技術要素を多層的に組み合わせて動作します。
 
-```text
-[ Data Payload ] 
-   ↓
-[ Michael MIC (Integrity Check) ] 
-   ↓
-[ Per-Packet Key Mixing ] ← [ Transmit Address ] + [ TKIP Sequence Counter ]
-   ↓
-[ RC4 Encryption ]
-   ↓
-[ Encrypted Packet ]
+```
+[ 上位アプリケーションデータ ]
+          │
+          ▼
+[ Michael MIC 計算 ] ──── (64-bit Michael Key + MAC Header + Payload)
+          │
+          ▼
+[ MSDU / MPDU フラグメンテーション ]
+          │
+          ▼
+[ TKIP Sequence Counter (TSC) 付与 ] ── (48-bit Counter: リプレイ攻撃防止)
+          │
+          ▼
+[ Per-Packet Key (PPK) Mixing Phase 1 & 2 ] ── (128-bit TK + TA + TSC ──> 128-bit PPK / 24-bit WEP IV)
+          │
+          ▼
+[ RC4 暗号化 ] ──── (PPK による RC4 擬似ランダムストリーム生成 & XOR)
+          │
+          ▼
+[ ICV (32-bit CRC) 付与 & フレーム送信 ]
 ```
 
-1.  **Per-Packet Key Mixing**: 送信元 MAC アドレスと 48 ビットのシークエンスカウンタを組み合わせ、パケットごとに異なる暗号鍵を生成します。
-2.  **Michael MIC**: 改ざん防止のために 8 バイトの整合性チェックコードを付加します。
-3.  **TKIP Sequence Counter (TSC)**: リプレイ攻撃を防ぐために、パケットごとにインクリメントされるカウンタを使用します。
+TKIPを構成する4つの核心コンポーネントの動作原理は以下の通りです。
+
+1. **TKIP Sequence Counter (TSC)**:
+   * 48ビットのシーケンスカウンタであり、フレームが送信されるたびに1ずつインクリメントされます。
+   * 受信側AP/クライアントは、直前に受信したフレームのTSC値を記憶しており、受信したパケットのTSCが記憶している値以下である場合、そのパケットを「リプレイパケット」とみなして即座に破棄します。
+2. **Per-Packet Key (PPK) Mixing (パケットごとの鍵共有ミキシング)**:
+   * 128ビットの Temporal Key (TK)、送信元MACアドレス (TA: Transmit Address)、および48ビットの TSC を組み合わせ、2段階のハッシュ関数（Phase 1 & Phase 2 Mixing）を実行します。
+   * **Phase 1 Mixing**: 128-bit TK + TA + TSCのハイ32ビット ──> 80-bit P1K (Phase 1 Key, 10,000パケットごとに再計算)。
+   * **Phase 2 Mixing**: 80-bit P1K + 128-bit TK + TSCのロー16ビット ──> 128-bit WEP Key (パケットごとに固有のRC4鍵)。
+   * これにより、WEPで問題となった「同じIVと鍵の組み合わせが頻繁に再利用される」問題を防ぎます。
+3. **Michael Message Integrity Check (MIC)**:
+   * ペイロードの改ざんを検知するため、64ビットの Michael Key（送信・受信で各64ビット、計128ビットのMIC鍵を使用）、送信元/宛先MACアドレス、および非暗号化データ領域を対象に計算される64ビットのハッシュ値です。
+   * 弱小なハードウェアCPUでも低負荷で計算できるよう簡略化されたアルゴリズムであるため、単体での暗号強度は限定的ですが、後述の「Countermeasures (対抗措置)」と組み合わせることで安全性を補強しています。
+4. **ICV (Integrity Check Value)**:
+   * WEPとの後方互換性を維持するため、平文データおよびMichael MICに対して32ビットのCRC-32 (ICV) を追加で計算し、RC4で共に暗号化します。
+
 
 ---
 
 ## ⚙ 動作シーケンス
 
-1.  **4-Way Handshake**: クライアントと AP 間で、暗号化に使用する一時鍵（PTK: Pairwise Transient Key）を生成します。
-2.  **鍵のミキシング**: 生成された一時鍵と送信元アドレス、TSC を混合し、パケット単位の RC4 鍵を作成します。
-3.  **MIC 付与**: データの整合性を確認するための Michael 値を計算し、ペイロードに付加します。
-4.  **暗号化**: RC4 によりデータと MIC を暗号化して送信します。
-5.  **対抗措置（Countermeasures）**: MIC エラー（改ざんの疑い）を 60 秒以内に 2 回検知した場合、AP は全クライアントをキックし、1 分間通信を停止して攻撃を防ぎます。
+TKIPにおけるパケットの送信処理シーケンスおよび受信検証シーケンスは以下の順番で実行されます。
 
----
+### 送信処理シーケンス
+
+```
+[送信側: AP / Client]
+
+1. 鍵の準備:
+   802.1X/EAP または PSK による 4-Way Handshake 完了後、128-bit Temporal Key (TK) と 128-bit Michael Key (64-bit Tx / 64-bit Rx) を共有。
+
+2. Michael MIC の計算:
+   64-bit Tx Michael Key + DA + SA + Priority + MSDU Payload ──> 64-bit Michael MIC コード生成。
+   MSDU ペイロードの末尾に 64-bit MIC を結合。
+
+3. TSC のインクリメント:
+   48-bit TKIP Sequence Counter (TSC) を 1 インクリメント。
+
+4. 2段階鍵ミキシング (PPK Mixing):
+   - Phase 1: TK (128-bit) + TA (MAC) + TSC[16..47] ──> 80-bit P1K 生成 (10,000パケットごとに更新)
+   - Phase 2: P1K (80-bit) + TK (128-bit) + TSC[0..15] ──> 128-bit Per-Packet RC4 Key 生成
+
+5. WEP ICV の計算 & RC4 暗号化:
+   - (MSDU Payload + Michael MIC) に対する CRC-32 (32-bit ICV) を計算。
+   - 128-bit Per-Packet Key を使用して RC4 暗号ストリームを生成し、[Payload + MIC + ICV] を XOR 暗号化。
+
+6. 802.11 物理フレームの構築:
+   - 802.11 ヘッダーの直後に 8バイトの TKIP ヘッダー (IV 3バイト + Extended IV 1バイト + TSC/Key ID 4バイト) を挿入して送信。
+```
+
+### 受信処理シーケンス
+
+```
+[受信側: AP / Client]
+
+1. TKIP ヘッダー解析 & リプレイ検証:
+   - 受信フレームから 48-bit TSC を抽出。
+   - 受信側が保持している前回正常フレームの TSC と比較。
+   - [判定] 受信 TSC <= 前回 TSC の場合、リプレイ攻撃と判断してフレームを即座に破棄 (Replay Failure Counter 加算)。
+
+2. 鍵の再構成 & RC4 復号:
+   - 抽出した TSC + 共有 TK (128-bit) + TA (送信元MAC) より、送信側と同じ Phase 1/2 Mixing を実行し 128-bit Per-Packet Key を復元。
+   - RC4 復号を実行し、[Payload + Michael MIC + ICV] を取得。
+
+3. ICV 検証:
+   - 復号データの CRC-32 を計算し、添付の ICV と比較。
+   - 不一致の場合、パケット破損または改ざんとみなし破棄 (ICV Error 加算)。
+
+4. Michael MIC 検証 (最終整合性チェック):
+   - 共有 Rx Michael Key (64-bit) + DA + SA + Priority + Payload より Michael MIC を再計算。
+   - フレームに含まれる Michael MIC と照合。
+   - [判定] 不一致の場合 ──> Michael MIC Failure が発生！
+     - ログ出力および Trap 送信 (syslog / SNMP)。
+     - MIC Failure カウンタを更新し、Countermeasure 処理ロジックへ移行。
+```
+
 
 ## 🎯 試験対策（CCIE Securityラボ試験）
 
-*   **スループット制限の理解**: 「802.11n を有効にしているのに 54Mbps しか出ない」というトラブルシュート問題が出た場合、暗号化方式に **TKIP** が選択されていないか確認する必要があります。
-*   **WPA (WPA1) との関連**: 多くの実装で、WPA-Personal/Enterprise のデフォルト暗号化が TKIP になっている点に注意してください。
-*   **Mixed Mode の設定**: TKIP と AES を同時に許可する設定（WPA-TKIP + WPA2-AES）の構成手順を把握しておく必要があります。
-*   **show コマンドの確認**: `show client detail` の出力結果から、`Policy Type` が WPA2 であっても `Encryption` が **TKIP** になっていないかを確認できる能力が求められます。
-*   **セキュリティ要件**: 「最新のセキュリティ基準に適合せよ」という要件に対し、TKIP を無効化して **AES (CCMP)** に統一する操作が期待されます。
+CCIE Security ラボ試験において、TKIPに関する出題ポイントは主に「MIC Failure Countermeasures（対抗措置）の動作検証」「WPA1/TKIP導入時の802.11n/ac速度制限のトラブルシューティング」「WLCにおけるWPA1/WPA2互換性設定」の3点に集中します。
+
+### 1. Michael MIC Failure Countermeasures (対抗措置メカニズム)
+
+TKIPでは、64ビットの Michael MIC の暗号強度が比較的低い（総当たり攻撃が可能）ため、攻撃者によるハッシュ解読試行を防御する目的で「MIC Failure Countermeasures」が規定されています。
+
+* **発動条件**: **60秒以内に2回の MIC Failure** が同一BSSID（AP）上で検出された場合。
+* **発動時のシステム動作**:
+  1. 該当BSSIDに接続されている**すべての無線クライアントに Deauthentication (切断) フレームを送信**して強制切断。
+  2. 該当BSSIDにおけるグループキー (GTK) およびペアワイズキー (PTK) の更新・再生成処理を停止。
+  3. **60秒間 (1分間)、該当SSIDでの新規アソシエーションおよび再接続を完全にブロック** (SSIDのビーコン停止または接続拒否)。
+  4. 60秒経過後、新しい GTK を生成してサービスを自動再開。
+* **ラボ試験での問われ方**:
+  * 「クライアントが定期的に切断され、1分間再接続できない症状の原因を特定せよ」という障害解析問題。
+  * `show wlan` や `show wireless client mac`、WLCのログ (`syslog` / `msglog`) から MIC Failure カウンタおよび Countermeasure タイマーの稼働状態を読み取る能力が評価されます。
+
+### 2. 802.11n / 802.11ac / 802.11ax レート制限問題
+
+IEEE 802.11n 規格以降、TKIP および WEP 暗号化の使用は高スループット (HT: High Throughput) レートのサポート対象外と規定されています。
+
+* **問題の症状**: クライアントが 802.11n/ac/ax 対応のAPに接続しているにもかかわらず、Wi-Fi リンク速度（物理レート）が **最大 54 Mbps**（802.11a/g レート）に制限される。
+* **原因**: WLANのセキュリティ設定で WPA/TKIP のみが有効化されている、あるいは WPA2/TKIP (CCMPが未有効) に設定されている。
+* **対策**: WLAN セキュリティで WPA2/WPA3 および AES (CCMP/GCMP) 暗号化を必須化または有効化する。
+
+### 3. コンフィグ読解とトラブルシューティングのポイント
+
+* **WLCログでの MIC Failure 判別**:
+  * ログ内に `MIC_FAILURE` や `TKIP Countermeasure activated on AP ... for 60 seconds` というメッセージが出力されているか確認。
+* **意図しない DoS 攻撃対策**:
+  * 悪意のある攻撃者が偽造した MIC エラーパケットを意図的に2回送出することで、拠点全体のWi-Fi通信を60秒間麻痺させることが可能です。ラボ試験では、この挙動を理解した上で WPA2-AES / WPA3 への移行策を提示する構成変更が求められます。
+
 
 ---
 
 ## 🛠 設定方法
 
-### Cisco WLC (AireOS) での TKIP 有効化例
-※試験ではレガシーサポートの文脈で設定を求められることがあります。
+Catalyst 9800 WLC (IOS-XE Wireless) および AireOS WLC における WPA1/WPA2 (TKIP/AES) の設定例を示します。
 
-```bash
-! WLANの作成
-config wlan create 10 LEGACY-SSID
+### 1. Catalyst 9800 WLC (IOS-XE) での設定例
 
-! WPA1(WPA) ポリシーの有効化とTKIPの指定
+IOS-XE 環境では、WLAN プロファイル配下で WPA1/WPA2 暗号化方式および Ciphers (TKIP / AES) を定義します。
+
+```text
+!
+wlan WLAN-LEGACY-TKIP 10 WLAN-LEGACY-TKIP
+ client vlan VLAN-100
+ security wpa
+  security wpa wpa1 ciphers tkip
+  security wpa wpa2 ciphers aes
+  security wpa akm psk
+  security wpa akm psk set-key ascii 0 SecretPsk123!
+ no shutdown
+!
+wireless tag policy POLICY-TAG-LEGACY
+ wlan WLAN-LEGACY-TKIP policy DEFAULT-POLICY-PROFILE
+!
+```
+
+### 2. AireOS WLC (CLI) での設定例
+
+AireOS 環境における WLAN への WPA1/TKIP および WPA2/AES の重複許可設定です。
+
+```text
+config wlan disable 10
 config wlan security wpa enable 10
-config wlan security wpa encryption tkip enable 10
-config wlan security wpa encryption aes disable 10
-
-! 認証方式の指定 (PSKの場合)
+config wlan security wpa wpa1 enable 10
+config wlan security wpa wpa1 ciphers tkip enable 10
+config wlan security wpa wpa2 enable 10
+config wlan security wpa wpa2 ciphers aes enable 10
 config wlan security wpa akm psk enable 10
-config wlan security wpa psk set 10 ascii cisco123
-
-! WLANの有効化
+config wlan security wpa akm psk set-key ascii SecretPsk123! 10
 config wlan enable 10
 ```
+
 
 ---
 
 ## 🔍 検証コマンド
 
+TKIP の動作状態、MIC Failure の発生状況、および Countermeasures タイマーを確認するための主要コマンド一覧です。
+
 | 目的 | コマンド |
-| :--- | :--- |
-| **クライアントの詳細ステータス** | <code>show client detail [MAC_ADDRESS]</code> |
-| **WLANのセキュリティ構成確認** | <code>show wlan [WLAN_ID]</code> |
-| **暗号化方式の統計確認** | <code>show ap stats dots11 [24ghz\|5ghz]</code> |
-| **リアルタイムの認証デバッグ** | <code>debug client [MAC_ADDRESS]</code> |
+| --- | --- |
+| WLANの暗号化設定(TKIP/AES)確認 (Cat9800) | `<code>show wlan name <wlan-name></code>` |
+| 接続クライアントの暗号化プロトコル(TKIP/AES)確認 (Cat9800) | `<code>show wireless client mac <mac-address> detail</code>` |
+| 無線インターフェイスのセキュリティ統計確認 (Cat9800) | `<code>show wireless stats client summary</code>` |
+| MIC Failure および Countermeasure のログ確認 (Cat9800) | `<code>show logging \| include MIC_FAILURE\|COUNTERMEASURE</code>` |
+| AireOS での WLAN セキュリティ詳細確認 | `<code>show wlan <wlan-id></code>` |
+| AireOS でのクライアント詳細・暗号方式確認 | `<code>show client detail <mac-address></code>` |
+| AireOS での MIC Failure カウンタ統計確認 | `<code>show ap debug rx-stats <ap-name></code>` |
+| TKIP/Key ハンドシェイクのリアルタイムデバッグ (Cat9800) | `<code>debug wireless mac <mac-address></code>` |
+| AireOS での 802.1X / EAP / Key トラブルシュート | `<code>debug client <mac-address></code>` |
+
 
 ---
 
 ## 🚨 トラブルシュート
 
-| 症状 | 原因 | 確認コマンド | 対処方法 |
-| :--- | :--- | :--- | :--- |
-| 通信速度が 54Mbps で頭打ちになる | 暗号化に TKIP が使用されている | <code>show client detail</code> | AES (CCMP) への変更を検討。 |
-| 無線接続が頻繁に切断（1分間停止）する | TKIP MIC エラー（攻撃または干渉） | <code>show logging</code> | 干渉源の特定、または AES への移行。 |
-| 802.11n/ac クライアントが接続できない | WLC側で TKIP のみが許可されている | <code>show wlan</code> | <code>AES enable</code> を追加設定。 |
-| クライアントが SSID を見つけられない | 端末側が TKIP (WPA1) を非サポート | N/A | WPA2-AES (WPA3-SAE) を使用。 |
+TKIP 運用時に遭遇する代表的な障害症状、根本原因、確認コマンド、および対処方法を下表にまとめます。
 
----
+| 症状 | 原因 | 確認コマンド | 対処方法 |
+| --- | --- | --- | --- |
+| 全クライアントが一斉に切断され、60秒間接続不能になる | 60秒以内に2回の Michael MIC Failure が発生し、Countermeasures が発動 | `<code>show logging \| include MIC_FAILURE</code>`<br>`<code>show wlan summary</code>` | ログで MIC Failure 発生元を調査。悪意のある攻撃またはノイズ/電波干渉によるパケット破損の排除。WPA2-AES/WPA3 への設定変更 |
+| 802.11n/ac 対応端末のリンク速度が最大 54 Mbps に制限される | WLAN の暗号化方式に TKIP が選択されており、HT/VHT (High Throughput) が無効化されている | `<code>show wireless client mac <mac> detail</code>`<br>`<code>show wlan name <wlan-name></code>` | WLAN セキュリティ設定で WPA2-AES (CCMP) または WPA3 (GCMP) を指定し、TKIP を無効化する |
+| 特定端末が WPA1/TKIP WLAN に接続失敗する | 端末側のドライバが TKIP 拡張ヘッダーや Group Key 更新に対応していない、または PSK 不一致 | `<code>debug wireless mac <mac-address></code>`<br>`<code>show client detail <mac></code>` | 端末ドライバの更新、または WPA2/WPA3 対応プロファイルへの切替。4-Way Handshake ログの解析 |
+| EAP/802.1X 認証成功後に IP アドレスが取得できない (4-Way Handshake 失敗) | TKIP の PTK/GTK 鍵交換時における 4-Way Handshake タイムアウト | `<code>debug wireless mac <mac-address></code>`<br>`<code>show trace connection</code>` | EAPOL タイムアウト値の調整、AP-WLC 間の MTU/フラグメンテーションの確認、キー再生成インターバルの見直し |
+
 
 ## ⚠ 制限事項
 
-*   **802.11n/ac/ax 不適合**: これらの高速規格では、AES-CCMP が必須要件です。TKIP を使用すると、規格上の最高速度は利用できず、レガシーモードにフォールバックされます。
-*   **脆弱性**: 現在では計算機能力の向上により、Michael MIC やキーストリームの解読が理論的に可能となっており、セキュリティ強度は不十分です。
+TKIP の使用における代表的な制限事項および互換性上の制約は以下の通りです。
+
+* **802.11n / 802.11ac / 802.11ax / 802.11be 非対応 (速度制限)**:
+  * IEEE 802.11n 規格以降、TKIP および WEP 暗号化を使用した接続では High Throughput (HT) / Very High Throughput (VHT) / High Efficiency (HE) の物理レート（150 Mbps, 866 Mbps, 1.2 Gbps 等）が完全に無効化されます。通信速度は最高でも **54 Mbps** に限定されます。
+* **WPA3 での完全サポート廃止**:
+  * Wi-Fi Alliance の WPA3 規格および IEEE 802.11-2020 規格において、TKIP のサポートは完全に撤廃されています。WPA3-Personal (SAE) および WPA3-Enterprise では TKIP を選択できません。
+* **CPU 処理負担とハードウェアアクセラレーション制限**:
+  * 一部の近代的な無線クライアントやアクセスポイントのチップセットは、TKIP (RC4 + Michael) のハードウェア暗号化エンジンを搭載しておらず、ソフトウェア処理にフォールバックしてCPU使用率が高騰するケースがあります。
+* **MIC Failure による構造的 DoS 脆弱性**:
+  * 60秒間に2回の MIC エラーでSSID全体が60秒間停止する仕様は、攻撃者が偽造パケットを注入するだけで拠点のWi-Fiをダウンさせられる深刻な DoS 脆弱性となります。
+
 
 ---
 
 ## 🔄 他技術との関連
 
-*   **3.5.e AES**: TKIP の後継となる強力な暗号化方式。現在の推奨。
-*   **3.5.b WPA2**: 一般的に AES を使用しますが、互換性のために TKIP もサポート可能です。
-*   **4-Way Handshake**: TKIP も AES も、このプロセスで PMK から PTK を導出します。
+TKIP は以下の無線・セキュリティ技術と密接に関連しています。
+
+* **IEEE 802.11n / 802.11ac / 802.11ax (高速無線規格)**:
+  * これらの規格で最大速度を発揮するためには、WLAN の暗号化プロトコルとして AES (CCMP / GCMP) の使用が必須条件です。TKIP が有効な WLAN では 802.11a/g 互換モードで動作します。
+* **WPA2 (CCMP/AES) および WPA3 (GCMP/SAE)**:
+  * TKIP は WPA1 の標準暗号方式ですが、WPA2 では CCMP (AES-CCM) が標準化され、WPA3 では GCMP が導入されました。TKIP から CCMP/GCMP への移行は現代のネットワークセキュリティの必須要件です。
+* **802.1X / EAP 認証 & Cisco ISE**:
+  * WPA-Enterprise (TKIP) 環境においても 802.1X 認証（EAP-TLS, PEAP 等）が実行され、RADIUS アトリビュートを介した Pairwise Master Key (PMK) の配布が行われます。
+* **Rogue Detection & Wireless DoS 防御**:
+  * 悪意のある不正アクセスポイント（Rogue AP）やジャマーによる MIC Failure インジェクション攻撃を監視するため、WLC の Rogue & DoS 防御メカニズムと連携します。
+
 
 ---
 
 ## 🧩 比較表
 
-| 特徴 | TKIP | AES (CCMP) |
-| :--- | :--- | :--- |
-| **ベースアルゴリズム** | RC4 (ストリーム暗号) | AES (ブロック暗号) |
-| **鍵長** | 128ビット (ミキシング鍵) | 128ビット以上 |
-| **整合性チェック** | Michael (64ビット) | CBC-MAC (128ビット) |
-| **CPU負荷** | 低い（レガシー向け） | 高い（ハードウェア処理推奨） |
-| **最高速度** | 54 Mbps | ワイヤレート (Gbpsクラス) |
+無線LANにおける主要な暗号化プロトコル（WEP, TKIP, CCMP/AES, GCMP）の比較を以下に示します。
+
+| 比較項目 | WEP | TKIP (WPA1) | CCMP (WPA2/WPA3) | GCMP (WPA3 192-bit) |
+| --- | --- | --- | --- | --- |
+| **標準規格** | IEEE 802.11 (1997) | IEEE 802.11i / WPA | IEEE 802.11i / WPA2 / WPA3 | IEEE 802.11ac/ax / WPA3-Ent |
+| **暗号化アルゴリズム** | RC4 (ストリーム暗号) | RC4 (ストリーム暗号) | AES-CCM (ブロック暗号) | AES-GCM (ブロック暗号) |
+| **暗号鍵長** | 40-bit / 104-bit 固定 | 128-bit Temporal Key | 128-bit (WPA2) / 192-bit (WPA3) | 192-bit (CNSA Suite B) |
+| **パケット鍵生成** | なし (固定鍵 + 24-bit IV) | 2段階 PPK ミキシング | Counter Mode (AES) | Galois/Counter Mode (AES) |
+| **整合性チェック (MIC)** | CRC-32 (ICV: 脆弱) | Michael MIC (64-bit) | CBC-MAC (128-bit) | GMAC (128-bit) |
+| **IV / Sequence カウンタ** | 24-bit IV (暗号再利用) | 48-bit TSC (リプレイ防止) | 48-bit PN (Packet Number) | 48-bit PN (Packet Number) |
+| **最高サポート速度** | 54 Mbps (802.11a/g) | 54 Mbps (802.11a/g) | マルチGbps (802.11n/ac/ax/be) | マルチGbps (802.11ax/be) |
+| **セキュリティレベル** | 極めて危険 (数分で解読) | 危険 (解読攻撃手法が存在) | 極めて強固 | 最上級 (政府・ミリタリーレベル) |
+
 
 ---
 
 ## 💡 ベストプラクティス
 
-1.  **新規構築時は TKIP を無効化**: セキュリティとパフォーマンスの両面から、AES のみを使用するように構成します。
-2.  **移行パスの検討**: レガシー端末を排除できない場合のみ、専用の低いセキュリティ用の SSID を分離して運用します。
-3.  **WPA3 への移行**: ブループリントに含まれる WPA3 では TKIP は完全に廃止されています。
+1. **TKIPの完全無効化 (WPA2-AES / WPA3 への全面移行)**:
+   * ネットワーク内のすべての WLAN で WPA1/TKIP を無効化し、WPA2-AES (CCMP) または WPA3-SAE/Enterprise に変更することを最優先とします。
+2. **レガシー端末用 SSID の隔離 (レガシーSSIDの分離)**:
+   * 業務上どうしても TKIP しかサポートしない旧式機器（古いバーコードスキャナ等）が存在する場合は、専用のレガシーSSIDを分離して作成し、最小限のアクセス権限（VACL/ACL、Private VLAN、ステートフルファイアウォールによる制限）を適用します。
+3. **802.11n/ac/ax スループット性能の確保**:
+   * メインの業務用SSIDで TKIP を許可していると、最新クライアントも誤って TKIP でアソシエートし、通信速度が 54 Mbps に低下するトラブルが発生します。業務用SSIDでは `wpa2 ciphers aes` のみを許可します。
+4. **MIC Failure 発生時の自動通知構成**:
+   * やむを得ず TKIP を運用する場合は、WLC 上で SNMP Trap または Syslog 通知を有効化し、Countermeasures 発動による拠点障害を即座に検知できる運用体制を構築します。
 
----
 
 ## 📝 ラボ学習・設定サンプル例
 
-### 1. レガシー対応 SSID の構築
-*   **要件**: WPA-TKIP のみを使用する VLAN 20 向けの SSID を作成せよ。
-*   **設定**: `config wlan security wpa encryption tkip enable 10`。
+実際のCCIE Securityラボ試験レベルを意識した、TKIPおよび無線セキュリティに関連する10個の設定・トラブルシューティング演習例を示します。
 
-### 2. TKIP による速度制限の検証
-*   **課題**: TKIP 有効時、802.11n 対応端末の接続レートが 54Mbps 以下であることを確認せよ。
-*   **検証**: `show client detail [MAC]` で `Current Rate` を確認。
+### サンプル1: Catalyst 9800 にてレガシー機器向け WPA1/TKIP SSID を構築する
 
-### 3. WPA2 Mixed Mode の構成
-*   **要件**: TKIP と AES の両方のクライアントを受け入れるように設定せよ。
-*   **設定**: `config wlan security wpa encryption tkip enable`, `config wlan security wpa encryption aes enable`。
+* **問題**: レガシーバーコードスキャナ用として、SSID `LEGACY-SCANNER` (VLAN 105) を WPA1-PSK (Passphrase: `ScannerKey2026`) / TKIP 暗号化で構築せよ。
+* **要件**: WPA2 は無効化し、WPA1/TKIP のみアソシエーションを許可すること。
 
-### 4. Michael MIC 対抗措置の確認
-*   **要件**: ログから MIC failure による通信断の記録を特定せよ。
+```text
+! [設定例: Catalyst 9800]
+wlan LEGACY-SCANNER 105 LEGACY-SCANNER
+ client vlan VLAN-105
+ security wpa
+  security wpa wpa1
+  security wpa wpa1 ciphers tkip
+  no security wpa wpa2
+  security wpa akm psk
+  security wpa akm psk set-key ascii 0 ScannerKey2026
+ no shutdown
+```
 
-### 5. GUI による設定 (WLC)
-*   **操作**: Wireless > WLANs > Security > Layer 2 タブで WPA/WPA2 を選択し、TKIP をチェック。
+* **検証方法**:
+  `show wlan name LEGACY-SCANNER` を実行し、`WPA1 Policy: Enabled`、`WPA1 Ciphers: TKIP`、`WPA2 Policy: Disabled` であることを確認。
 
-### 6. WPA-Enterprise + TKIP
-*   **要件**: 802.1X 認証を使用し、暗号化を TKIP に設定せよ。
-
-### 7. 暗号化方式の監査
-*   **要件**: `show wlan sum` を使用し、稼働中の全 WLAN の暗号化方式をリストアップせよ。
-
-### 8. Catalyst 9800 での TKIP 設定
-*   **要件**: IOS-XE ベースの WLC で TKIP を含む Policy Profile を定義せよ。
-
-### 9. デバッグによる PTK 生成の確認
-*   **操作**: `debug client` を有効にし、TKIP 鍵が割り当てられるプロセスを追跡せよ。
-
-### 10. SSID 移行ラボ
-*   **要件**: 既存の TKIP SSID を AES-only に変更し、非対応クライアントが接続不能になることを確認せよ。
 
 ---
 
+### サンプル2: AireOS WLC にて WPA1-TKIP / WPA2-AES 混在 WLAN を構築する
+
+* **問題**: 遷移期対応として WLAN ID 12 (`MIGRATE-SSID`) を作成し、WPA1-TKIP と WPA2-AES の両方を許可せよ。
+* **要件**: PSK 認証 (`MigrateSecret!`) を使用すること。
+
+```text
+! [設定例: AireOS WLC CLI]
+config wlan disable 12
+config wlan create 12 MIGRATE-SSID MIGRATE-SSID
+config wlan interface 12 vlan-200
+config wlan security wpa enable 12
+config wlan security wpa wpa1 enable 12
+config wlan security wpa wpa1 ciphers tkip enable 12
+config wlan security wpa wpa2 enable 12
+config wlan security wpa wpa2 ciphers aes enable 12
+config wlan security wpa akm psk enable 12
+config wlan security wpa akm psk set-key ascii MigrateSecret! 12
+config wlan enable 12
+```
+
+* **検証方法**:
+  `show wlan 12` を実行し、WPA1 Ciphers に TKIP、WPA2 Ciphers に AES (CCMP) の両方がリストされていることを確認。
+
+
+---
+
+### サンプル3: TKIP による 802.11n 速度制限障害のトラブルシューティング
+
+* **問題**: 802.11n クライアントが SSID `CORP-WIFI` 接続時に最大 54 Mbps でしか通信できない。802.11n 高速化 (HT) を有効化せよ。
+* **要件**: WLAN セキュリティから TKIP を除外し、WPA2-AES のみを強制すること。
+
+```text
+! [設定例: Catalyst 9800]
+wlan CORP-WIFI 11 CORP-WIFI
+ security wpa
+  no security wpa wpa1
+  security wpa wpa2
+  security wpa wpa2 ciphers aes
+  no security wpa wpa2 ciphers tkip
+```
+
+* **検証方法**:
+  クライアント接続後、`show wireless client mac <mac> detail` を実行し、`Current Rate` が HT/VHT レート（例: 144.4 Mbps 以上）に復旧したことを確認。
+
+
+---
+
+### サンプル4: Catalyst 9800 にて 802.1X (EAP-PEAP) / TKIP 構成を構築する
+
+* **問題**: 医療用移動カート端末向けに、802.1X 認証と TKIP 暗号化を組み合わせた SSID `MED-CART` を構築せよ。
+* **要件**: RADIUS サーバーグループ `ISE-RADIUS-GROUP` を使用すること。
+
+```text
+! [設定例: Catalyst 9800]
+wlan MED-CART 108 MED-CART
+ client vlan VLAN-108
+ security wpa
+  security wpa wpa1
+  security wpa wpa1 ciphers tkip
+  no security wpa wpa2
+  security wpa akm dot1x
+  authentication-server ISE-RADIUS-GROUP
+ no shutdown
+```
+
+* **検証方法**:
+  `show wlan name MED-CART` で `Authentication: 802.1X` および `WPA1 Ciphers: TKIP` を確認。
+
+
+---
+
+### サンプル5: Michael MIC Failure 発生時の Syslog アラート出力の確認
+
+* **問題**: WLC 上で MIC Failure 発生時に即座に Syslog アラートを外部サーバー `192.168.10.50` に送出する設定を行え。
+* **要件**: トラップレベルを info 以上に設定すること。
+
+```text
+! [設定例: Catalyst 9800]
+logging host 192.168.10.50
+logging trap informational
+logging source-interface GigabitEthernet1
+```
+
+* **検証方法**:
+  `show logging` を実行し、ロギングホストの登録および発生した `WIRELESS-3-MIC_FAILURE` イベントログ出力を確認。
+
+
+---
+
+### サンプル6: AireOS WLC にて Countermeasures タイマーの発動状態を検証する
+
+* **問題**: 接続中のクライアントが Michael MIC エラーを多発させた際の、AireOS におけるアソシエーション制限状態を検証せよ。
+* **要件**: CLI より統計情報および AP デバッグ情報を収集すること。
+
+```text
+! [検証手順: AireOS CLI]
+(Cisco Controller) > show wlan 10
+(Cisco Controller) > show ap debug rx-stats AP-FLOOR1
+(Cisco Controller) > debug client 00:11:22:33:44:55
+```
+
+* **検証方法**:
+  Countermeasures 発動時に `TKIP countermeasure invoked for BSSID ...` というログと、60秒間のブロックタイマーが稼働していることを確認。
+
+
+---
+
+### サンプル7: FlexConnect Local Switching 環境における TKIP WLAN の構成
+
+* **問題**: 拠点 AP (FlexConnect モード) 上でローカルスイッチングされる SSID `BRANCH-TKIP` を構築せよ。
+* **要件**: データトラフィックは拠点スイッチ VLAN 30 にローカルオフロードすること。
+
+```text
+! [設定例: Catalyst 9800]
+wlan BRANCH-TKIP 130 BRANCH-TKIP
+ security wpa
+  security wpa wpa1 ciphers tkip
+  security wpa akm psk
+  security wpa akm psk set-key ascii 0 BranchKey987
+ no shutdown
+
+wireless profile policy BRANCH-FLEX-POLICY
+ flex-profile BRANCH-FLEX-PROFILE
+ central switching disabled
+ central dhcp disabled
+ vlan-central-switching disabled
+```
+
+* **検証方法**:
+  `show wireless client mac <mac> detail` で `Client State: Associated`、`Data Switching: Local`、`Cipher: TKIP` を確認。
+
+
+---
+
+### サンプル8: Cat9800 にて TKIP 端末の 4-Way Handshake をデバッグ追跡する
+
+* **問題**: TKIP 接続端末 `aabb.cc00.1122` の EAPOL Key 交換失敗の原因を追跡せよ。
+* **要件**: 条件付きデバッグ (Conditional Debug) を使用すること。
+
+```text
+! [設定手順: Catalyst 9800]
+debug wireless mac aabb.cc00.1122
+! 接続試行実行後
+show logging profile wireless filter mac aabb.cc00.1122 addresses
+undebug all
+```
+
+* **検証方法**:
+  抽出されたログ内で `EAPOL-Key M2` または `M4` 送受信時の MIC 検証ステップおよび Key Index 設定結果を確認。
+
+
+---
+
+### サンプル9: TKIP 非サポート端末の排除ルール（WPA2/WPA3 専用SSIDの完全強制）
+
+* **問題**: 既存の混在 SSID `CORP-GUEST` から TKIP および WPA1 を完全に削除し、WPA2-AES および WPA3-SAE (Transition Mode) に統合せよ。
+* **要件**: Protected Management Frames (PMF) を Optional に設定すること。
+
+```text
+! [設定例: Catalyst 9800]
+wlan CORP-GUEST 20 CORP-GUEST
+ security wpa
+  no security wpa wpa1
+  security wpa wpa2
+  security wpa wpa2 ciphers aes
+  security wpa wpa3
+  security wpa akm psk
+  security wpa akm sae
+  security wpa akm psk set-key ascii 0 GuestPass2026!
+  pmf optional
+ no shutdown
+```
+
+* **検証方法**:
+  `show wlan name CORP-GUEST` で `WPA1: Disabled`、`WPA2 Ciphers: AES`、`WPA3 Ciphers: AES` を確認。
+
+
+---
+
+### サンプル10: TKIP カウンターメジャー発動後の手動インターフェイス復旧演習
+
+* **問題**: テスト環境にて Countermeasures により 60秒間ブロックされた WLAN/AP 状態を手動でリセット・復旧させる手順を確認せよ。
+* **要件**: WLAN の有効化・無効化サイクルを実行すること。
+
+```text
+! [復旧手順: Catalyst 9800]
+wlan LEGACY-SCANNER 105 LEGACY-SCANNER
+ shutdown
+ no shutdown
+```
+
+* **検証方法**:
+  `show wlan name LEGACY-SCANNER` で Status が `Enabled` に復帰し、クライアントからのアソシエーション要求が即座に受諾されることを確認。
+
+
 ## ❓ 想定試験問題
 
-1.  **トラブルシュート**: クライアントが 802.11n 対応であるにも関わらず、スループットが非常に低い。WLC の設定を確認したところ、`WPA Encryption: TKIP` が有効で、`AES` が無効であった。解決策は？
-    *   **回答**: `AES (CCMP)` 暗号化を有効にし、クライアントが AES で接続するように修正する。
-2.  **Design**: レガシー端末と最新端末が混在する環境で、セキュリティを最大化しつつ互換性を保つための暗号化ポリシーは？
-    *   **回答**: WPA2-AES を主とし、必要最低限の範囲で TKIP との Mixed Mode を使用する。
-3.  **コンフィグ読解**: `show client detail` で `Encryption: TKIP` と表示されている。このクライアントがリプレイ攻撃を受けるリスクは WEP と比較してどうか？
-    *   **回答**: 低い。TKIP は TSC (Sequence Counter) を使用しており、WEP よりもリプレイ攻撃に対する耐性が強化されている。
-4.  **実装**: WLC で TKIP を有効にした WLAN において、特定のクライアントが接続した瞬間に他のクライアントが一時的に切断された。考えられる原因は？
-    *   **回答**: TKIP の Michael MIC エラーが 60 秒以内に複数回発生し、Countermeasures（対抗措置）が発動した。
-5.  **Design**: WPA3 を導入する計画があるが、既存の TKIP デバイスは継続利用可能か？
-    *   **回答**: 不可能。WPA3 規格では TKIP および WEP はサポートされておらず、AES-CCMP/GCMP が必須となる。
+CCIE Security ラボ試験・筆記試験レベルを想定した実践問題5問です。
+
+### 問1 (トラブルシューティング)
+**問題**:
+Catalyst 9800 WLC において、802.11n 対応のハンドヘルド端末が SSID `WAREHOUSE` 接続時に物理リンク速度 54 Mbps 以上を達成できません。WLC のコンフィグを確認したところ、以下の設定が記述されていました。通信速度が低下している根本原因と、速度制限を解消するための適切なコンフィグ変更を記述しなさい。
+
+```text
+wlan WAREHOUSE 100 WAREHOUSE
+ security wpa
+  security wpa wpa1
+  security wpa wpa1 ciphers tkip
+  security wpa wpa2
+  security wpa wpa2 ciphers tkip
+  security wpa akm psk
+  security wpa akm psk set-key ascii 0 WarehouseKey123
+```
+
+**解答・解説**:
+* **原因**: 802.11n 規格において、TKIP 暗号化プロトコルは High Throughput (HT) レートをサポートしておらず、TKIP が有効な状態（または WPA2 で Ciphers に TKIP が選択されている状態）では自動的に 802.11a/g のレガシーレート (最大 54 Mbps) にフォールバックします。
+* **修正コンフィグ**:
+  ```text
+  wlan WAREHOUSE 100 WAREHOUSE
+   security wpa
+    no security wpa wpa1
+    security wpa wpa2
+    security wpa wpa2 ciphers aes
+    no security wpa wpa2 ciphers tkip
+  ```
+
+
+---
+
+### 問2 (機構・シーケンス理解)
+**問題**:
+TKIP の Michael Message Integrity Check (MIC) において、60秒間に2回の MIC Failure が発生した場合に発動する Countermeasures (対抗措置) の全動作ステップを順序立てて説明しなさい。
+
+**解答・解説**:
+1. 該当 BSSID に接続中のすべての無線クライアントに対して Deauthentication (切断) フレームを送信し、接続を即座に遮断します。
+2. 該当 BSSID 上での Pairwise Key (PTK) および Group Key (GTK) の更新処理および再生成処理を即座に凍結・停止します。
+3. **60秒間 (1分間)**、該当 BSSID でのアソシエーション要求および再接続を完全に拒否・ブロックします。
+4. 60秒経過後、新しい Group Key (GTK) を再生成してアソシエーションの受付および通常サービスを自動再開します。
+
+
+---
+
+### 問3 (コンフィグ読解・デザイン)
+**問題**:
+以下の Catalyst 9800 WLC コンフィグにおいて、セキュリティ上の課題を2点指摘し、その対策を説明しなさい。
+
+```text
+wlan LEGACY-WIFI 50 LEGACY-WIFI
+ security wpa
+  security wpa wpa1
+  security wpa wpa1 ciphers tkip
+  security wpa akm psk
+  security wpa akm psk set-key ascii 0 SimpleKey123
+```
+
+**解答・解説**:
+1. **TKIP 使用による影響**:
+   * **課題**: TKIP はレガシー暗号化方式であり、Michael MIC 違反により 60秒間アソシエーションが停止する影響があります。
+   * **対策**: WPA2-AES (CCMP) または WPA3-SAE へ暗号化方式をアップグレードする。
+2. **共有鍵の設定**:
+   * **課題**: 単純な PSK はセキュリティ強度が限定的です。
+   * **対策**: 複雑な PSK に変更するか、802.1X (EAP-TLS / PEAP) 認証を採用する。
+
+
+---
+
+### 問4 (トラブルシューティング)
+**問題**:
+WLC の Syslog ログに以下のメッセージが記録されました。発生している事象と、確認コマンドを説明しなさい。
+
+`%DOT11-3-MIC_FAILURE: AP Floor2-AP, Client 0011.2233.4455: Michael MIC verification failed for received packet.`
+
+**解答・解説**:
+* **発生事象**: クライアント `0011.2233.4455` から受信したパケットの Michael MIC 値と、AP 側で再計算した MIC 値が不一致となったためパケットが破棄されました。これが60秒以内に2回発生すると Countermeasures が発動します。
+* **確認コマンド**:
+  * `show logging | include MIC_FAILURE` (MIC エラーの発生頻度の特定)
+  * `show wireless client mac 0011.2233.4455 detail` (該当クライアントの接続状態確認)
+  * `show ap debug rx-stats` (AP 受信パケットのエラー統計確認)
+
+
+---
+
+### 問5 (実装・暗号理論)
+**問題**:
+TKIP の「Per-Packet Key (PPK) Mixing」の2段階（Phase 1 及び Phase 2）処理において、それぞれの出力結果を説明しなさい。
+
+**解答・解説**:
+* **Phase 1 Mixing**:
+  * **出力**: 80ビットの Phase 1 Key (P1K)。(10,000パケットごとに更新)
+* **Phase 2 Mixing**:
+  * **出力**: 128ビットの Per-Packet Key (パケットごとに固有の RC4 暗号化キー)。
+
 
 ---
 
 ## 🔗 参考リソース
 
-*   **Cisco Live (BRKSEC-2003)**: [Wireless Security Deep Dive](https://www.ciscolive.com/)
-*   **Cisco Configuration Guide**: [Configuring WLAN Security - Cisco WLC 8.10](https://www.cisco.com/c/en/us/td/docs/wireless/controller/8-10/config-guide/b_cg810/security.html)
-*   **White Paper**: [Wi-Fi Protected Access (WPA) Overview](https://www.cisco.com/c/en/us/support/docs/wireless-mobility/wireless-lan-wlan/67134-wpa-config.html)
+Cisco 公式の技術ドキュメント、Cisco Live 資料、Configuration Guide 一覧です。
+
+* Cisco Wireless Controller Configuration Guide, Release 8.10 - Configuring WPA and WPA2
+* Cisco Catalyst 9800 Series Wireless Controller Software Configuration Guide, IOS XE 17.x - WLAN Security Settings
+* Cisco Technical Support & Documentation - Troubleshooting TKIP and WPA Security Failures
+* Cisco Live Slide - BRKSEC-3055: Enterprise Wireless Security Architecture
+* Wi-Fi Alliance Technical Whitepaper - WPA / WPA2 Security Enhancements and TKIP Architecture
+* Cisco Technical Note - 802.11n Data Rates and Encryption Protocol Support (TKIP / AES Requirements)
+
 
 ---
 
 ## 📝 **補足（Notes）**
-- **学習メモ**: 「TKIP は WEP 用ハードウェアのための絆創膏」と覚えましょう。
-- **注意点**: ラボ試験で `AES` と `TKIP` の選択を間違えると、要件のスループットを満たせなくなる可能性があるため、常に AES 優先で考える必要があります。
+
+### TKIP パケット構造概要図
+
+```text
++-------------------+--------------------+------------------------+-------------------+----------------+
+| 802.11 Header     | TKIP Header        | Encrypted Payload      | Encrypted MIC     | ICV (CRC-32)   |
+| (24-30 Bytes)     | (8 Bytes)          | (Variable Bytes)       | (8 Bytes)         | (4 Bytes)      |
++-------------------+--------------------+------------------------+-------------------+----------------+
+                    | IV (3B) | Ext IV   |
+                    | (TSC0)  | (TSC1-5) |
+```
+
+### 注意点
+TKIP は現在レガシー技術として扱われます。ラボ試験や実務のトラブルシューティングにおいて概念理解は必須ですが、新規構築時には必ず WPA2-AES (CCMP) または WPA3-SAE (GCMP) を選択してください。
